@@ -1,0 +1,13 @@
+app:
+  dry_run: true
+
+trading:
+  confidence_threshold: 0.60
+
+symbols:
+  RELIANCE: "500325"
+  TCS: "532540"
+  INFY: "500209"
+  HDFCBANK: "500180"
+  ICICIBANK: "532174"
+  SBIN: "500112"

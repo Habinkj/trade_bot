@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Semi-Automated Trading Bot</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="app">
+    <h1>📈 Trade Bot</h1>
+    <p class="subtitle">ML-based signal with human approval</p>
+
+    <div class="card">
+      <label for="symbol">Select Stock</label>
+      <select id="symbol">
+        <option value="RELIANCE">RELIANCE</option>
+      </select>
+
+      <button class="primary" onclick="predict()">Get Prediction</button>
+    </div>
+
+    <div class="card">
+      <h3>Signal Output</h3>
+      <pre id="result">No signal yet</pre>
+    </div>
+
+    <div class="card">
+      <button class="danger" onclick="execute()">Approve & Execute Trade</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
