@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from kiteconnect import KiteConnect
 import json
-from backend.strategy import generate_signal, scan_market
+from backend.strategy import generate_signal
 
 app = FastAPI()
 
