@@ -1,35 +1,98 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Semi-Automated Trading Bot</title>
-  <link rel="stylesheet" href="style.css" />
+    <title>AI Trading Bot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 420px;
+            margin: auto;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+        }
+
+        button { cursor: pointer; font-weight: bold; }
+
+        .login-btn { background: #2563eb; color: white; }
+        .scan-btn { background: #9333ea; color: white; }
+        .predict-btn { background: #16a34a; color: white; }
+        .approve-btn { background: #dc2626; color: white; }
+
+        #resultBox {
+            margin-top: 20px;
+            padding: 15px;
+            background: #334155;
+            border-radius: 10px;
+            font-size: 14px;
+            text-align: left;
+            white-space: pre-wrap;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .divider {
+            margin: 10px 0;
+            opacity: 0.6;
+        }
+    </style>
 </head>
 <body>
 
-  <div class="app">
-    <h1>📈 Trade Bot</h1>
-    <p class="subtitle">ML-based signal with human approval</p>
+<h1>📈 AI Trading Bot</h1>
 
-    <div class="card">
-      <label for="symbol">Select Stock</label>
-      <select id="symbol">
-        <option value="RELIANCE">RELIANCE</option>
-      </select>
+<div class="card">
 
-      <button class="primary" onclick="predict()">Get Prediction</button>
-    </div>
+    <button class="login-btn" onclick="loginZerodha()">🔐 Login Zerodha</button>
 
-    <div class="card">
-      <h3>Signal Output</h3>
-      <pre id="result">No signal yet</pre>
-    </div>
+    <button class="scan-btn" onclick="scanMarket()">🔥 Show Best Stocks Today</button>
 
-    <div class="card">
-      <button class="danger" onclick="execute()">Approve & Execute Trade</button>
-    </div>
-  </div>
+    <select id="topStocks">
+        <option value="">Select Recommended Stock</option>
+    </select>
 
-  <script src="script.js"></script>
+    <div class="divider">— OR —</div>
+
+    <input type="text" id="symbolInput" placeholder="Enter Stock Symbol Manually">
+
+    <select id="smaSelect">
+        <option value="5_20">SMA 5 / 20 (Default)</option>
+        <option value="2_9">SMA 2 / 9 (Fast)</option>
+        <option value="10_50">SMA 10 / 50 (Swing)</option>
+    </select>
+
+    <input type="number" id="qtyInput" value="1" min="1" max="5">
+
+    <button class="predict-btn" onclick="getPrediction()">📊 Get Prediction</button>
+
+    <button class="approve-btn" onclick="approveTrade()">✅ Approve Trade (REAL)</button>
+
+    <div id="resultBox">Waiting for action...</div>
+
+</div>
+
+<script src="script.js"></script>
+
 </body>
 </html>
