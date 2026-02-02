@@ -24,8 +24,14 @@
         <!-- Market Scan Card -->
         <div class="card">
             <h2>Market Scan</h2>
-            <button onclick="runScan()">Run Scan</button>
-            <ul id="scanResults" class="scan-results"></ul>
+            <select id="strategySelect">
+  <option value="crossover">SMA Crossover</option>
+  <option value="price">Price Above SMA</option>
+  <option value="triple">Triple SMA Trend</option>
+</select>
+
+<button onclick="runScan()">Run Scan</button>
+<ul id="scanResults"></ul>
         </div>
 
         <!-- Place Order Card -->

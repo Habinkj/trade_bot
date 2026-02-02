@@ -24,8 +24,23 @@ def zerodha_callback(request_token: str):
 # ---------- Market Scan (Demo Signals) ----------
 
 @router.get("/scan")
-def scan_market():
-    return {"signals": ["INFY BUY", "TCS SELL", "HDFCBANK BUY"]}
+def scan_market(strategy: str = "crossover"):
+    """
+    Scan market and return BUY signals only
+    strategy = crossover | price | triple
+    """
+
+    signals = []
+
+    # Fake demo logic (replace later with real SMA calc)
+    if strategy == "crossover":
+        signals.append("INFY BUY (SMA Cross)")
+    elif strategy == "price":
+        signals.append("HDFCBANK BUY (Price > SMA)")
+    elif strategy == "triple":
+        signals.append("RELIANCE BUY (Triple SMA Trend)")
+
+    return {"signals": signals}
 
 
 # ---------- Place Order ----------
