@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.staticfiles import staticfiles
 from fastapi.responses import RedirectResponse, JSONResponse
 from kiteconnect import KiteConnect
 import os
@@ -10,9 +11,9 @@ API_KEY = os.getenv("KITE_API_KEY")
 API_SECRET = os.getenv("KITE_API_SECRET")
 
 if not API_KEY or not API_SECRET:
-    raise Exception("Missing KITE_API_KEY or KITE_API_SECRET in environment variables")
+    print("⚠️ Zerodha API keys not set yet. Add them in Render environment variables.")
 
-kite = KiteConnect(api_key=API_KEY)
+kite = KiteConnect(api_key=API_KEY) if API_KEY else None
 
 # This stores login session TEMPORARILY (resets if server restarts — that’s OK)
 ACCESS_TOKEN = None
