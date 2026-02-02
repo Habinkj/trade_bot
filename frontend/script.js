@@ -56,19 +56,40 @@ async function placeOrder() {
     const symbol = document.getElementById("symbol").value;
     const quantity = document.getElementById("quantity").value;
     const side = document.getElementById("side").value;
-    const status = document.getElementById("orderStatus");
+    const statusBox = document.getElementById("orderStatus");
 
     try {
-        const res = await fetch(`${API_BASE}/order`, {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            statusBox.innerText = "Please login first";
+            return;
+        }
+
+        const response = await fetch("/order", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ symbol, quantity, side })
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({
+                symbol: symbol,
+                quantity: Number(quantity),
+                side: side
+            })
         });
 
-        const data = await res.json();
-        status.innerText = data.message || "Order placed!";
-    } catch (err) {
-        status.innerText = "Order failed";
+        if (!response.ok) {
+            statusBox.innerText = "Order failed";
+            return;
+        }
+
+        const data = await response.json();
+        statusBox.innerText = "✅ " + data.status;
+
+    } catch (error) {
+        statusBox.innerText = "Order error";
+        console.error(error);
     }
 }
 async function loginUser() {
