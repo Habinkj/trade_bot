@@ -1,4 +1,4 @@
-const API = "http://127.0.0.1:8000"; // change to Render URL when deployed
+const API = "http://https://tradebot-iuqd.onrender.com"; // change to Render URL when deployed
 
 function loginZerodha() {
     window.open(API + "/login", "_blank");
