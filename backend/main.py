@@ -54,10 +54,13 @@ def get_balance():
 
     try:
         kite.set_access_token(ACCESS_TOKEN)
-        margins = kite.margins()
-        available_cash = margins["equity"]["available"]["cash"]
 
-        return {"available_cash": available_cash}
+        margins = kite.margins()
+        cash = margins["equity"]["available"]["cash"]
+
+        return {
+            "available_cash": cash
+        }
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
