@@ -67,21 +67,28 @@ def balance():
 # ================= RISK STATUS =================
 @app.get("/risk-status")
 def risk_status():
-    if not require_login():
+    global ACCESS_TOKEN
+
+    if ACCESS_TOKEN is None:
         return JSONResponse(status_code=401, content={"error": "Login required"})
 
     try:
+        kite.set_access_token(ACCESS_TOKEN)
+
+        # Get positions
         positions = kite.positions()
-        pnl = positions["day"]["pnl"]
+        day_positions = positions.get("day", [])
+
+        # Calculate total P&L safely
+        total_pnl = sum(p.get("pnl", 0) for p in day_positions)
+
         return {
-            "trading_allowed": pnl > -500,  # Stop if loss > ₹500
-            "pnl": pnl
+            "trading_allowed": total_pnl > -500,  # stop if loss > ₹500
+            "pnl": round(total_pnl, 2)
         }
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
-
-
 # ================= SAFE REAL ORDER =================
 @app.post("/order")
 def place_order(symbol: str, qty: int, side: str):
