@@ -1,45 +1,31 @@
-import os
-from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi import FastAPI, Query
+from fastapi.responses import JSONResponse
 from kiteconnect import KiteConnect
+import os
 
 app = FastAPI()
 
-API_KEY = os.getenv("KITE_API_KEY")
-API_SECRET = os.getenv("KITE_API_SECRET")
+# 🔐 API credentials (set these in Render ENV VARIABLES)
+API_KEY = os.getenv("API_KEY")
+API_SECRET = os.getenv("API_SECRET")
 
 kite = KiteConnect(api_key=API_KEY)
 
-# ===== GLOBAL STATE =====
+# Will store logged-in session token
 ACCESS_TOKEN = None
 
-# ===== RISK CONTROLS =====
-MAX_QTY_PER_ORDER = 5
-DAILY_LOSS_LIMIT = -1000  # Stop trading if loss exceeds ₹1000
 
-
-@app.get("/")
-def home():
-    return {"message": "Trade bot API is running 🚀"}
-
-
-# ================= LOGIN FLOW =================
-
+# ================= LOGIN =================
 @app.get("/login")
 def login():
     login_url = kite.login_url()
     return {"login_url": login_url}
 
 
+# ================= CALLBACK =================
 @app.get("/callback")
-def callback(request: Request):
+def callback(request_token: str = Query(...)):
     global ACCESS_TOKEN
-
-    request_token = request.query_params.get("request_token")
-
-    if not request_token:
-        return JSONResponse(status_code=400, content={"error": "Missing request_token"})
-
     try:
         data = kite.generate_session(request_token, api_secret=API_SECRET)
         ACCESS_TOKEN = data["access_token"]
@@ -47,86 +33,69 @@ def callback(request: Request):
 
         return {
             "status": "Login successful",
-            "access_token": ACCESS_TOKEN,
             "user_id": data["user_id"]
         }
 
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        return JSONResponse(status_code=400, content={"error": str(e)})
 
 
-# ================= ACCOUNT INFO =================
-
-@app.get("/balance")
-def get_balance():
+# ================= CHECK LOGIN =================
+def require_login():
+    global ACCESS_TOKEN
     if ACCESS_TOKEN is None:
+        return False
+    kite.set_access_token(ACCESS_TOKEN)
+    return True
+
+
+# ================= BALANCE =================
+@app.get("/balance")
+def balance():
+    if not require_login():
         return JSONResponse(status_code=401, content={"error": "Login required"})
 
     try:
-        kite.set_access_token(ACCESS_TOKEN)
         margins = kite.margins()
-
-        return {
-            "available_cash": margins["equity"]["available"]["cash"]
-        }
+        cash = margins["equity"]["available"]["cash"]
+        return {"available_cash": cash}
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 
+# ================= RISK STATUS =================
 @app.get("/risk-status")
 def risk_status():
-    if ACCESS_TOKEN is None:
+    if not require_login():
         return JSONResponse(status_code=401, content={"error": "Login required"})
 
     try:
-        kite.set_access_token(ACCESS_TOKEN)
         positions = kite.positions()
-        day_positions = positions.get("day", [])
-
-        total_pnl = sum(p.get("pnl", 0) for p in day_positions)
-
-        if total_pnl <= DAILY_LOSS_LIMIT:
-            return {
-                "trading_allowed": False,
-                "reason": "Daily loss limit hit",
-                "pnl": total_pnl
-            }
-
+        pnl = positions["day"]["pnl"]
         return {
-            "trading_allowed": True,
-            "pnl": total_pnl
+            "trading_allowed": pnl > -500,  # Stop if loss > ₹500
+            "pnl": pnl
         }
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 
-# ================= SAFE ORDER PLACEMENT =================
-
+# ================= SAFE REAL ORDER =================
 @app.post("/order")
 def place_order(symbol: str, qty: int, side: str):
-    global ACCESS_TOKEN
-
-    if ACCESS_TOKEN is None:
+    if not require_login():
         return JSONResponse(status_code=401, content={"error": "Login required"})
 
-    # 🛑 Quantity Safety Limit
-    if qty > MAX_QTY_PER_ORDER:
-        return JSONResponse(status_code=400, content={"error": f"Max qty allowed is {MAX_QTY_PER_ORDER}"})
+    # 🛑 HARD SAFETY RULES
+    if qty > 5:
+        return JSONResponse(status_code=400, content={"error": "Max qty allowed is 5"})
 
-    # 🛑 Side Validation
     if side.lower() not in ["buy", "sell"]:
         return JSONResponse(status_code=400, content={"error": "Side must be BUY or SELL"})
 
-    # 🛑 Daily Loss Check
-    risk = risk_status()
-    if isinstance(risk, dict) and risk.get("trading_allowed") is False:
-        return JSONResponse(status_code=403, content=risk)
-
     try:
-        kite.set_access_token(ACCESS_TOKEN)
-
         order_id = kite.place_order(
             variety=kite.VARIETY_REGULAR,
             exchange=kite.EXCHANGE_NSE,
