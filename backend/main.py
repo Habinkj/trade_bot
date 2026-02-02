@@ -32,6 +32,7 @@ def callback(request_token: str):
     try:
         data = kite.generate_session(request_token, api_secret=API_SECRET)
         ACCESS_TOKEN = data["access_token"]
+
         kite.set_access_token(ACCESS_TOKEN)
 
         return {
@@ -50,20 +51,16 @@ def get_balance():
     global ACCESS_TOKEN
 
     if ACCESS_TOKEN is None:
-        return JSONResponse(status_code=401, content={"error": "Login required"})
+        return {"error": "Not logged in"}
 
     try:
         kite.set_access_token(ACCESS_TOKEN)
-
         margins = kite.margins()
-        cash = margins["equity"]["available"]["cash"]
 
-        return {
-            "available_cash": cash
-        }
+        return margins  # 🔥 show full response for debugging
 
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        return {"error": str(e)}
 
 
 # ------------------ RISK STATUS ------------------
