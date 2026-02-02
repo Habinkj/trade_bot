@@ -16,7 +16,7 @@ async function runScan() {
     resultsBox.innerHTML = "Scanning market...";
 
     try {
-        const response = await fetch("/scan");
+        const response = await fetch("https://tradebot-iuqd.onrender.com/scan");
         const data = await response.json();
 
         resultsBox.innerHTML = "";
