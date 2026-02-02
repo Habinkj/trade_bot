@@ -1,11 +1,30 @@
+// -------- BALANCE --------
+async function refreshBalance() {
+    const balanceEl = document.getElementById("balanceAmount");
+    balanceEl.innerText = "Loading...";
+
+    try {
+        const res = await fetch("/balance"); // optional backend endpoint
+        if (!res.ok) throw new Error();
+
+        const data = await res.json();
+        balanceEl.innerText = "₹" + data.balance;
+    } catch {
+        balanceEl.innerText = "₹0";
+    }
+}
+
+
+// -------- MARKET SCAN --------
 async function runScan() {
     const resultsBox = document.getElementById("scanResults");
     resultsBox.innerHTML = "Scanning...";
 
     try {
         const response = await fetch("/scan");
-        const data = await response.json();
+        if (!response.ok) throw new Error("Scan failed");
 
+        const data = await response.json();
         resultsBox.innerHTML = "";
 
         if (data.signals && data.signals.length > 0) {
@@ -15,36 +34,50 @@ async function runScan() {
                 resultsBox.appendChild(li);
             });
         } else {
-            resultsBox.innerHTML = "No signals found";
+            resultsBox.innerHTML = "<li>No signals found</li>";
         }
 
     } catch (error) {
-        resultsBox.innerHTML = "Scan failed";
-        console.error(error);
+        resultsBox.innerHTML = "<li>Scan failed</li>";
+        console.error("Scan error:", error);
     }
 }
 
 
+// -------- PLACE ORDER --------
 async function placeOrder() {
     const symbol = document.getElementById("symbol").value;
     const quantity = document.getElementById("quantity").value;
     const side = document.getElementById("side").value;
     const resultBox = document.getElementById("orderResult");
 
+    if (!symbol || !quantity) {
+        resultBox.innerText = "Enter symbol and quantity";
+        return;
+    }
+
     resultBox.innerText = "Placing order...";
 
     try {
         const response = await fetch("/order", {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ symbol, quantity, side })
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                symbol: symbol,
+                quantity: quantity,
+                side: side
+            })
         });
 
+        if (!response.ok) throw new Error("Order failed");
+
         const data = await response.json();
-        resultBox.innerText = data.status;
+        resultBox.innerText = data.status || "Order placed successfully";
 
     } catch (error) {
         resultBox.innerText = "Order failed";
-        console.error(error);
+        console.error("Order error:", error);
     }
 }
