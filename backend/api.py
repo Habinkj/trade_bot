@@ -1,26 +1,27 @@
 from fastapi import APIRouter
-from backend.strategy import generate_signal
-from backend.utils import load_config, get_dhan_credentials
-from backend.trader import DhanTrader
+from pydantic import BaseModel
+from backend.strategy import generate_signal, scan_market
+from backend.zerodha_trader import place_real_order
 
 router = APIRouter()
 
-@router.get("/signal/{symbol}")
-def get_signal(symbol: str):
-    return generate_signal(symbol)
+class PredictRequest(BaseModel):
+    symbol: str
+    mode: str = "DEFAULT"
 
-@router.post("/trade/{symbol}")
-def execute_trade(symbol: str):
-    cfg = load_config()
-    creds = get_dhan_credentials()
+class OrderRequest(BaseModel):
+    symbol: str
+    qty: int
+    side: str
 
-    trader = DhanTrader(
-        client_id=creds["client_id"],
-        access_token=creds["access_token"],
-        dry_run=cfg["app"]["dry_run"]
-    )
+@router.post("/predict")
+def predict(req: PredictRequest):
+    return generate_signal(req.symbol, req.mode)
 
-    return {
-        "status": "Trade request received",
-        "mode": "DRY_RUN" if cfg["app"]["dry_run"] else "LIVE"
-    }
+@router.get("/scan")
+def scan():
+    return scan_market()
+
+@router.post("/order")
+def order(req: OrderRequest):
+    return place_real_order(req.symbol, req.qty, req.side)

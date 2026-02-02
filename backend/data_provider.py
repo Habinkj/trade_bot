@@ -1,29 +1,11 @@
-# backend/data_provider.py
 import pandas as pd
-from datetime import datetime, timedelta
+import random
 
-def get_candles(symbol: str, interval: str = "5m", lookback_days: int = 5):
-    """
-    TEMPORARY DATA PROVIDER (Groww-style placeholder)
-
-    This simulates OHLC data so your bot, ML, and frontend WORK.
-    Later we will replace this with:
-    - Dhan Data API (official)
-    - OR Groww official API (if they approve you)
-    """
-
-    end = datetime.now()
-    start = end - timedelta(days=lookback_days)
-
-    dates = pd.date_range(start=start, end=end, freq="5min")
-
-    df = pd.DataFrame({
-        "datetime": dates,
-        "open": 1000,
-        "high": 1010,
-        "low": 990,
-        "close": 1005,
-        "volume": 100000
-    })
-
-    return df
+def fetch_intraday_data(symbol):
+    data = {
+        "open": [random.uniform(100, 200) for _ in range(100)],
+        "high": [random.uniform(200, 250) for _ in range(100)],
+        "low": [random.uniform(80, 120) for _ in range(100)],
+        "close": [random.uniform(100, 200) for _ in range(100)],
+    }
+    return pd.DataFrame(data)

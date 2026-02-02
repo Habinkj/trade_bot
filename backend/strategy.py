@@ -1,20 +1,52 @@
-# backend/strategy.py
-from backend.data_provider import get_candles
+import json
+from backend.indicators import calculate_sma, calculate_adx
+from backend.data_provider import fetch_intraday_data
 
-def generate_signal(symbol: str):
-    df = get_candles(symbol)
+def load_watchlist():
+    with open("config/watchlist.json") as f:
+        return json.load(f)
 
-    # SIMPLE SMA STRATEGY (baseline, not holy grail)
-    df["sma_fast"] = df["close"].rolling(5).mean()
-    df["sma_slow"] = df["close"].rolling(20).mean()
+def generate_signal(symbol: str, mode: str):
+    df = fetch_intraday_data(symbol)
+
+    if mode == "FAST":
+        short, long = 2, 9
+    elif mode == "TREND":
+        short, long = 10, 50
+    else:
+        short, long = 5, 20
+
+    df["SMA_SHORT"] = calculate_sma(df, short)
+    df["SMA_LONG"] = calculate_sma(df, long)
+    df["ADX"] = calculate_adx(df)
 
     latest = df.iloc[-1]
-    prev = df.iloc[-2]
 
-    if prev["sma_fast"] < prev["sma_slow"] and latest["sma_fast"] > latest["sma_slow"]:
-        return {"signal": "BUY"}
+    if latest["SMA_SHORT"] > latest["SMA_LONG"] and latest["ADX"] > 20:
+        signal = "BUY"
+        reason = "Uptrend with strength"
+        confidence = min(95, int(latest["ADX"] + 50))
+    elif latest["SMA_SHORT"] < latest["SMA_LONG"] and latest["ADX"] > 20:
+        signal = "SELL"
+        reason = "Downtrend with strength"
+        confidence = min(95, int(latest["ADX"] + 50))
+    else:
+        signal = "HOLD"
+        reason = "No strong trend"
+        confidence = 50
 
-    if prev["sma_fast"] > prev["sma_slow"] and latest["sma_fast"] < latest["sma_slow"]:
-        return {"signal": "SELL"}
+    return {
+        "symbol": symbol,
+        "signal": signal,
+        "reason": reason,
+        "confidence": confidence
+    }
 
-    return {"signal": "HOLD"}
+def scan_market():
+    watchlist = load_watchlist()
+    results = []
+    for stock in watchlist:
+        res = generate_signal(stock, "DEFAULT")
+        if res["signal"] != "HOLD":
+            results.append(res)
+    return results
