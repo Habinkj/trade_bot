@@ -2,18 +2,21 @@ from kiteconnect import KiteConnect
 import os
 
 API_KEY = os.getenv("ZERODHA_API_KEY")
-ACCESS_TOKEN = os.getenv("ZERODHA_ACCESS_TOKEN")
+API_SECRET = os.getenv("ZERODHA_API_SECRET")
 
-if not API_KEY or not ACCESS_TOKEN:
-    raise Exception("Zerodha API credentials missing. Check environment variables.")
+if not API_KEY or not API_SECRET:
+    raise Exception("Zerodha API credentials missing. Set ZERODHA_API_KEY and ZERODHA_API_SECRET")
 
 kite = KiteConnect(api_key=API_KEY)
-kite.set_access_token(ACCESS_TOKEN)
+
+# Access token will be set AFTER login
+def set_access_token(token: str):
+    kite.set_access_token(token)
 
 
-def place_real_order(symbol: str, qty: int, side: str):
-    if qty > 5:
-        return {"error": "Max qty allowed is 5"}
+def place_real_order(symbol, qty, side):
+    if not kite.access_token:
+        return {"error": "Login with Zerodha first"}
 
     try:
         order_id = kite.place_order(

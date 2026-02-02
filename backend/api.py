@@ -1,30 +1,48 @@
 from fastapi import APIRouter
-from backend.zerodha_trader import kite  # your Zerodha session object
-from bckend.zerodha_trader import place_real_order
+from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
+
+from backend.zerodha_trader import kite, API_SECRET, set_access_token, place_real_order
+
 router = APIRouter()
 
+# ---------- Zerodha Login Flow ----------
 
-# ---------------- BOT ENDPOINTS ---------------- #
+@router.get("/zerodha/login")
+def zerodha_login():
+    login_url = kite.login_url()
+    return RedirectResponse(login_url)
+
+
+@router.get("/zerodha/callback")
+def zerodha_callback(request_token: str):
+    data = kite.generate_session(request_token, api_secret=API_SECRET)
+    set_access_token(data["access_token"])
+    return {"message": "Zerodha login successful. You can now trade."}
+
+
+# ---------- Market Scan (Demo Signals) ----------
 
 @router.get("/scan")
 def scan_market():
-    """
-    Scan market using Zerodha session
-    """
-    # Example signals (replace later with strategy logic)
     return {"signals": ["INFY BUY", "TCS SELL", "HDFCBANK BUY"]}
 
 
-from backend.zerodha_trader import place_real_order
+# ---------- Place Order ----------
+
+class OrderRequest(BaseModel):
+    symbol: str
+    quantity: int
+    side: str  # BUY or SELL
+
 
 @router.post("/order")
-def place_order(order: dict):
-    result = place_real_order(order["symbol"], order["qty"], order["side"])
+def place_order(order: OrderRequest):
+    return place_real_order(order.symbol, order.quantity, order.side)
 
-    if "error" in result:
-        raise HTTPException(status_code=400, detail=result["error"])
 
-    return result
+# ---------- Bot Status ----------
+
 @router.get("/status")
 def status():
     return {"bot": "running", "market": "open"}
