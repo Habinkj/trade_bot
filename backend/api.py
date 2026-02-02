@@ -18,7 +18,7 @@ class OrderRequest(BaseModel):
 def predict(req: PredictRequest):
     return generate_signal(req.symbol, req.mode)
 
-@app.get("/scan")
+@router.get("/scan")
 def scan_market():
     signals = strategy.scan()  # your existing signal list
 
@@ -41,6 +41,6 @@ def scan_market():
 def order(req: OrderRequest):
     return place_real_order(req.symbol, req.qty, req.side)
 
-@app.get("/status")
+@router.get("/status")
 def strategy_status():
     return {"running": True}
