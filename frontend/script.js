@@ -12,21 +12,27 @@ async function refreshBalance() {
 
 async function runScan() {
     const resultsList = document.getElementById("scanResults");
-    resultsList.innerHTML = "Scanning...";
+    resultsList.innerHTML = "Scanning market...";
 
     try {
-        const res = await fetch(`${API_BASE}/scan`);
-        const data = await res.json();
+        const response = await fetch("/scan");   // calls FastAPI backend
+        const data = await response.json();
 
         resultsList.innerHTML = "";
-        data.results.forEach(stock => {
-            const li = document.createElement("li");
-            li.textContent = stock;
-            resultsList.appendChild(li);
-        });
 
-    } catch (err) {
-        resultsList.innerHTML = "Scan failed";
+        if (data.signals && data.signals.length > 0) {
+            data.signals.forEach(signal => {
+                const li = document.createElement("li");
+                li.textContent = signal;
+                resultsList.appendChild(li);
+            });
+        } else {
+            resultsList.innerHTML = "<li>No signals found</li>";
+        }
+
+    } catch (error) {
+        resultsList.innerHTML = "<li>Error scanning market</li>";
+        console.error(error);
     }
 }
 
