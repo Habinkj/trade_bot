@@ -11,30 +11,27 @@ async function refreshBalance() {
 }
 
 async function runScan() {
-    const resultsList = document.getElementById("scanResults");
-    resultsList.innerHTML = "<li>Scanning market...</li>";
+    const resultsBox = document.getElementById("scanResults");
+    resultsBox.innerHTML = "Scanning market...";
 
     try {
         const response = await fetch("/scan");
         const data = await response.json();
 
-        console.log("Scan API response:", data); // debug
+        resultsBox.innerHTML = "";
 
-        resultsList.innerHTML = "";
-
-        // 👇 HANDLE BACKEND FORMAT { signals: [...] }
         if (data.signals && data.signals.length > 0) {
             data.signals.forEach(signal => {
                 const li = document.createElement("li");
                 li.textContent = signal;
-                resultsList.appendChild(li);
+                resultsBox.appendChild(li);
             });
         } else {
-            resultsList.innerHTML = "<li>No signals found</li>";
+            resultsBox.innerHTML = "No signals found";
         }
 
     } catch (error) {
-        resultsList.innerHTML = "<li>Error scanning market</li>";
+        resultsBox.innerHTML = "Scan failed";
         console.error("Scan error:", error);
     }
 }
