@@ -57,7 +57,14 @@ def get_balance():
         kite.set_access_token(ACCESS_TOKEN)
         margins = kite.margins()
 
-        return margins  # 🔥 show full response for debugging
+        equity = margins["equity"]
+        available = equity["available"]
+
+        usable_cash = available["live_balance"]  # 🔥 THIS is correct
+
+        return {
+            "available_cash": usable_cash
+        }
 
     except Exception as e:
         return {"error": str(e)}
