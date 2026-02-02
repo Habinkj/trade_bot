@@ -5,9 +5,9 @@ import os
 
 app = FastAPI()
 
-# 🔐 API credentials (set these in Render ENV VARIABLES)
-API_KEY = os.getenv("API_KEY")
-API_SECRET = os.getenv("API_SECRET")
+# 🔐 Read from Render Environment Variables
+API_KEY = os.getenv("KITE_API_KEY")
+API_SECRET = os.getenv("KITE_API_SECRET")
 
 kite = KiteConnect(api_key=API_KEY)
 
