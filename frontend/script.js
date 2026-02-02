@@ -11,13 +11,14 @@ async function refreshBalance() {
 }
 
 async function runScan() {
-    const resultsBox = document.getElementById("scanResults"); // 👈 MISSING LINE
-
-    resultsBox.innerHTML = "Scanning market...";
+    const resultsBox = document.getElementById("scanResults");
+    resultsBox.innerHTML = "Scanning...";
 
     try {
         const response = await fetch("https://tradebot-iuqd.onrender.com/scan");
         const data = await response.json();
+
+        console.log("SCAN RESPONSE:", data); // 👈 ADD THIS
 
         resultsBox.innerHTML = "";
 
