@@ -12,13 +12,27 @@ async function refreshBalance() {
 
 async function runScan() {
     const resultsBox = document.getElementById("scanResults");
-    resultsBox.innerHTML = "Scanning...";
 
     try {
-        const response = await fetch("https://tradebot-iuqd.onrender.com/scan");
-        const data = await response.json();
+        const token = localStorage.getItem("token");   // 🔑 get saved token
 
-        console.log("SCAN RESPONSE:", data); // 👈 ADD THIS
+        if (!token) {
+            resultsBox.innerHTML = "Please login first";
+            return;
+        }
+
+        const response = await fetch("/scan", {
+            headers: {
+                "Authorization": "Bearer " + token   // 🔥 send token
+            }
+        });
+
+        if (!response.ok) {
+            resultsBox.innerHTML = "Scan failed (Unauthorized)";
+            return;
+        }
+
+        const data = await response.json();
 
         resultsBox.innerHTML = "";
 
@@ -33,8 +47,8 @@ async function runScan() {
         }
 
     } catch (error) {
-        resultsBox.innerHTML = "Scan failed";
-        console.error("Scan error:", error);
+        resultsBox.innerHTML = "Scan error";
+        console.error(error);
     }
 }
 
@@ -55,5 +69,33 @@ async function placeOrder() {
         status.innerText = data.message || "Order placed!";
     } catch (err) {
         status.innerText = "Order failed";
+    }
+}
+async function loginUser() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    try {
+        const response = await fetch("/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ username, password })
+        });
+
+        if (!response.ok) {
+            throw new Error("Invalid credentials");
+        }
+
+        const data = await response.json();
+
+        // 🔥 THIS IS STEP 1 — SAVE TOKEN
+        localStorage.setItem("token", data.token);
+
+        alert("Login successful!");
+    } catch (error) {
+        alert("Login failed");
+        console.error(error);
     }
 }
