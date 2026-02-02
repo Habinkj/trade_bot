@@ -1,4 +1,4 @@
-const API_BASE = ""; // Same domain
+const API_BASE = "https://https://tradebot-iuqd.onrender.com"; // Same domain
 
 async function refreshBalance() {
     try {
