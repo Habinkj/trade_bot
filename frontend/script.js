@@ -1,91 +1,51 @@
-const API = "https://tradebot-iuqd.onrender.com";
+const API_BASE = ""; // Same domain
 
-// Auto-refresh every 10 seconds
-setInterval(() => {
-    getBalance();
-    runScan();
-    checkStrategy();
-}, 10000);
-
-window.onload = () => {
-    getBalance();
-    runScan();
-    checkStrategy();
-};
-
-// -------- BALANCE --------
-async function getBalance() {
+async function refreshBalance() {
     try {
-        const res = await fetch(`${API}/balance`);
+        const res = await fetch(`${API_BASE}/balance`);
         const data = await res.json();
-        document.getElementById("balance").innerText = data.available_cash;
+        document.getElementById("balanceAmount").innerText = data.available_cash || 0;
     } catch (err) {
-        console.log("Balance fetch failed");
+        alert("Failed to fetch balance");
     }
 }
 
-// -------- MARKET SCAN --------
 async function runScan() {
+    const resultsList = document.getElementById("scanResults");
+    resultsList.innerHTML = "Scanning...";
+
     try {
-        const res = await fetch(`${API}/scan`);
+        const res = await fetch(`${API_BASE}/scan`);
         const data = await res.json();
 
-        const list = document.getElementById("scanResults");
-        list.innerHTML = "";
-
-        if (data.signals.length === 0) {
-            list.innerHTML = "<li>No signals found</li>";
-            return;
-        }
-
-        data.signals.forEach(item => {
+        resultsList.innerHTML = "";
+        data.results.forEach(stock => {
             const li = document.createElement("li");
-            li.innerHTML = `
-                <strong>${item.symbol}</strong> 
-                <span style="color:#2c3e50;">₹${item.price}</span>
-            `;
-            list.appendChild(li);
+            li.textContent = stock;
+            resultsList.appendChild(li);
         });
 
     } catch (err) {
-        console.log("Scan failed");
+        resultsList.innerHTML = "Scan failed";
     }
 }
 
-// -------- PLACE ORDER --------
 async function placeOrder() {
     const symbol = document.getElementById("symbol").value;
-    const qty = parseInt(document.getElementById("qty").value);
+    const quantity = document.getElementById("quantity").value;
     const side = document.getElementById("side").value;
+    const status = document.getElementById("orderStatus");
 
     try {
-        await fetch(`${API}/order`, {
+        const res = await fetch(`${API_BASE}/order`, {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ symbol, qty, side })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ symbol, quantity, side })
         });
 
-        alert("Order Sent 🚀");
-    } catch (err) {
-        alert("Order failed ❌");
-    }
-}
-
-// -------- STRATEGY STATUS --------
-async function checkStrategy() {
-    try {
-        const res = await fetch(`${API}/status`);
         const data = await res.json();
-
-        const dot = document.querySelector(".dot");
-
-        if (data.running) {
-            dot.style.backgroundColor = "#2ecc71"; // green
-        } else {
-            dot.style.backgroundColor = "#e74c3c"; // red
-        }
-
+        status.innerText = data.message || "Order placed!";
     } catch (err) {
-        console.log("Status check failed");
+        status.innerText = "Order failed";
     }
 }

@@ -2,52 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TradeBot Dashboard</title>
-    <link rel="stylesheet" href="style.css"/>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-    <header class="navbar">
+    <header class="topbar">
         <h1>TradeBot</h1>
-        <div class="status">
-            <span class="dot"></span> Live
-        </div>
+        <span class="status-dot">● Live</span>
     </header>
 
     <main class="dashboard">
 
-        <!-- Balance Card -->
+        <!-- Account Balance Card -->
         <div class="card">
             <h2>Account Balance</h2>
-            <p class="balance">₹<span id="balance">0</span></p>
-            <button onclick="getBalance()">Refresh</button>
+            <p class="balance">₹<span id="balanceAmount">0</span></p>
+            <button onclick="refreshBalance()">Refresh</button>
         </div>
 
-        <!-- Scan Card -->
+        <!-- Market Scan Card -->
         <div class="card">
             <h2>Market Scan</h2>
-            <button class="scan-btn" onclick="runScan()">Run Scan</button>
+            <button onclick="runScan()">Run Scan</button>
             <ul id="scanResults"></ul>
         </div>
 
-        <!-- Order Card -->
+        <!-- Place Order Card -->
         <div class="card">
             <h2>Place Order</h2>
-
             <input type="text" id="symbol" placeholder="Symbol (e.g. INFY)" />
-            <input type="number" id="qty" placeholder="Quantity" />
-
+            <input type="number" id="quantity" placeholder="Quantity" />
             <select id="side">
                 <option value="BUY">BUY</option>
                 <option value="SELL">SELL</option>
             </select>
-
             <button onclick="placeOrder()">Place Order</button>
+            <p id="orderStatus"></p>
         </div>
 
     </main>
 
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

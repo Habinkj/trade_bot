@@ -1,46 +1,47 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Depends, Header
 from pydantic import BaseModel
-from backend.strategy import generate_signal, scan_market
-from backend.zerodha_trader import place_real_order
 
 router = APIRouter()
 
-class PredictRequest(BaseModel):
-    symbol: str
-    mode: str = "DEFAULT"
+# ---------------- AUTH ----------------
+FAKE_USER_DB = {
+    "admin": "1234"
+}
 
-class OrderRequest(BaseModel):
-    symbol: str
-    qty: int
-    side: str
+ACTIVE_TOKENS = set()
 
-@router.post("/predict")
-def predict(req: PredictRequest):
-    return generate_signal(req.symbol, req.mode)
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+def verify_token(authorization: str = Header(None)):
+    if authorization not in ACTIVE_TOKENS:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+@router.post("/login")
+def login(data: LoginRequest):
+    if FAKE_USER_DB.get(data.username) == data.password:
+        token = f"token-{data.username}"
+        ACTIVE_TOKENS.add(token)
+        return {"token": token}
+    raise HTTPException(status_code=401, detail="Invalid credentials")
+
+
+# ---------------- BOT ENDPOINTS ----------------
 
 @router.get("/scan")
-def scan_market():
-    signals = strategy.scan()  # your existing signal list
+def scan_market(user=Depends(verify_token)):
+    return {"signals": ["INFY BUY", "TCS SELL", "HDFCBANK BUY"]}
 
-    results = []
-
-    for symbol in signals:
-        try:
-            price = broker.get_ltp(symbol)  # fetch live price
-        except:
-            price = "N/A"
-
-        results.append({
-            "symbol": symbol,
-            "price": price
-        })
-
-    return {"signals": results}
 
 @router.post("/order")
-def order(req: OrderRequest):
-    return place_real_order(req.symbol, req.qty, req.side)
+def place_order(order: dict, user=Depends(verify_token)):
+    return {"status": "Order received", "order": order}
+
 
 @router.get("/status")
-def strategy_status():
-    return {"running": True}
+def status():
+    return {"bot": "running", "market": "open"}
