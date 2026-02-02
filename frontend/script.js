@@ -11,7 +11,8 @@ async function refreshBalance() {
 }
 
 async function runScan() {
-    const resultsBox = document.getElementById("scanResults");
+    const resultsBox = document.getElementById("scanResults"); // 👈 MISSING LINE
+
     resultsBox.innerHTML = "Scanning market...";
 
     try {
