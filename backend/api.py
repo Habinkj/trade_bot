@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from zerodha_trader import kite  # your Zerodha session object
-
+from backend.zerodha_trader import kite  # your Zerodha session object
+from bckend.zerodha_trader import place_real_order
 router = APIRouter()
 
 
@@ -15,27 +15,16 @@ def scan_market():
     return {"signals": ["INFY BUY", "TCS SELL", "HDFCBANK BUY"]}
 
 
+from backend.zerodha_trader import place_real_order
+
 @router.post("/order")
 def place_order(order: dict):
-    """
-    Place order via Zerodha
-    """
-    try:
-        response = kite.place_order(
-            variety="regular",
-            exchange="NSE",
-            tradingsymbol=order["symbol"],
-            transaction_type="BUY" if order["side"] == "BUY" else "SELL",
-            quantity=int(order["quantity"]),
-            order_type="MARKET",
-            product="MIS"
-        )
-        return {"status": "Order placed", "order_id": response}
+    result = place_real_order(order["symbol"], order["qty"], order["side"])
 
-    except Exception as e:
-        return {"status": "Order failed", "error": str(e)}
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
 
-
+    return result
 @router.get("/status")
 def status():
     return {"bot": "running", "market": "open"}
