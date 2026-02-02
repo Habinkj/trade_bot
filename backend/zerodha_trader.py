@@ -1,11 +1,11 @@
 from kiteconnect import KiteConnect
 import os
 
-API_KEY = os.getenv("ZERODHA_API_KEY")
-API_SECRET = os.getenv("ZERODHA_API_SECRET")
+API_KEY = os.getenv("KITE_API_KEY")
+API_SECRET = os.getenv("KITE_API_SECRET")
 
 if not API_KEY or not API_SECRET:
-    raise Exception("Zerodha API credentials missing. Set ZERODHA_API_KEY and ZERODHA_API_SECRET")
+    raise Exception("Zerodha API Keys not set. Login will not work until they are added")
 
 kite = KiteConnect(api_key=API_KEY)
 
