@@ -12,14 +12,17 @@ async function refreshBalance() {
 
 async function runScan() {
     const resultsList = document.getElementById("scanResults");
-    resultsList.innerHTML = "Scanning market...";
+    resultsList.innerHTML = "<li>Scanning market...</li>";
 
     try {
-        const response = await fetch("/scan");   // calls FastAPI backend
+        const response = await fetch("/scan");
         const data = await response.json();
+
+        console.log("Scan API response:", data); // debug
 
         resultsList.innerHTML = "";
 
+        // 👇 HANDLE BACKEND FORMAT { signals: [...] }
         if (data.signals && data.signals.length > 0) {
             data.signals.forEach(signal => {
                 const li = document.createElement("li");
@@ -32,7 +35,7 @@ async function runScan() {
 
     } catch (error) {
         resultsList.innerHTML = "<li>Error scanning market</li>";
-        console.error(error);
+        console.error("Scan error:", error);
     }
 }
 
