@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
     <title>TradeBot Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
@@ -26,30 +25,24 @@
         <div class="card">
             <h2>Market Scan</h2>
             <button onclick="runScan()">Run Scan</button>
-            <div id="scan-results" class="scan-results"></div>
-            <ul id="scanResults"></ul>
+            <ul id="scanResults" class="scan-results"></ul>
         </div>
 
         <!-- Place Order Card -->
         <div class="card">
-            <input type="text" id="symbol" placeholder="Symbol (e.g. INFY)" />
-<input type="number" id="quantity" placeholder="Quantity" />
-<select id="side">
-  <option value="BUY">BUY</option>
-  <option value="SELL">SELL</option>
-</select>
+            <h2>Place Order</h2>
 
-<button onclick="placeOrder()">Place Order</button>
+            <input type="text" id="symbol" placeholder="Symbol (e.g. INFY)">
+            <input type="number" id="quantity" placeholder="Quantity">
 
-<p id="orderStatus"></p>
+            <select id="side">
+                <option value="BUY">BUY</option>
+                <option value="SELL">SELL</option>
+            </select>
+
+            <button onclick="placeOrder()">Place Order</button>
+            <p id="orderResult" class="order-result"></p>
         </div>
-
-        <div class="card">
-    <h2>Login</h2>
-    <input type="text" id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="loginUser()">Login</button>
-</div>
 
     </main>
 

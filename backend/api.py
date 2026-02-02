@@ -1,45 +1,39 @@
-from fastapi import APIRouter, HTTPException, Depends, Header
-from pydantic import BaseModel
+from fastapi import APIRouter
+from zerodha_trader import kite  # your Zerodha session object
 
 router = APIRouter()
 
-# ---------------- AUTH ----------------
-FAKE_USER_DB = {
-    "admin": "1234"
-}
 
-ACTIVE_TOKENS = set()
-
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-
-def verify_token(authorization: str = Header(None)):
-    if authorization not in ACTIVE_TOKENS:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
-
-@router.post("/login")
-def login(data: LoginRequest):
-    if FAKE_USER_DB.get(data.username) == data.password:
-        token = f"token-{data.username}"
-        ACTIVE_TOKENS.add(token)
-        return {"token": token}
-    raise HTTPException(status_code=401, detail="Invalid credentials")
-
-
-# ---------------- BOT ENDPOINTS ----------------
+# ---------------- BOT ENDPOINTS ---------------- #
 
 @router.get("/scan")
-def scan_market(user=Depends(verify_token)):
+def scan_market():
+    """
+    Scan market using Zerodha session
+    """
+    # Example signals (replace later with strategy logic)
     return {"signals": ["INFY BUY", "TCS SELL", "HDFCBANK BUY"]}
 
 
 @router.post("/order")
-def place_order(order: dict, user=Depends(verify_token)):
-    return {"status": "Order received", "order": order}
+def place_order(order: dict):
+    """
+    Place order via Zerodha
+    """
+    try:
+        response = kite.place_order(
+            variety="regular",
+            exchange="NSE",
+            tradingsymbol=order["symbol"],
+            transaction_type="BUY" if order["side"] == "BUY" else "SELL",
+            quantity=int(order["quantity"]),
+            order_type="MARKET",
+            product="MIS"
+        )
+        return {"status": "Order placed", "order_id": response}
+
+    except Exception as e:
+        return {"status": "Order failed", "error": str(e)}
 
 
 @router.get("/status")
