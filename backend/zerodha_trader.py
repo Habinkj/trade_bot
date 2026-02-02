@@ -1,41 +1,61 @@
 from kiteconnect import KiteConnect
 import os
+import pandas as pd
+from datetime import datetime, timedelta
 
 API_KEY = os.getenv("KITE_API_KEY")
-API_SECRET = os.getenv("KITE_API_SECRET")
-
-if not API_KEY or not API_SECRET:
-    raise Exception("Zerodha API Keys not set. Login will not work until they are added")
+ACCESS_TOKEN = os.getenv("KITE_ACCESS_TOKEN")
 
 kite = KiteConnect(api_key=API_KEY)
 
-# Access token will be set AFTER login
-def set_access_token(token: str):
-    kite.set_access_token(token)
+if ACCESS_TOKEN:
+    kite.set_access_token(ACCESS_TOKEN)
 
 
-def place_real_order(symbol, qty, side):
-    if not kite.access_token:
-        return {"error": "Login with Zerodha first"}
-
+# ================== DATA FETCH ==================
+def get_candles(symbol, interval="5minute", days=5):
     try:
-        order_id = kite.place_order(
-            variety=kite.VARIETY_REGULAR,
-            exchange=kite.EXCHANGE_NSE,
-            tradingsymbol=symbol.upper(),
-            transaction_type=kite.TRANSACTION_TYPE_BUY if side.lower() == "buy" else kite.TRANSACTION_TYPE_SELL,
-            quantity=qty,
-            product=kite.PRODUCT_MIS,
-            order_type=kite.ORDER_TYPE_MARKET
-        )
+        instrument = f"NSE:{symbol.upper()}"
+        to_date = datetime.now()
+        from_date = to_date - timedelta(days=days)
 
-        return {
-            "status": "Order placed",
-            "order_id": order_id,
-            "symbol": symbol.upper(),
-            "qty": qty,
-            "side": side.upper()
-        }
-
+        data = kite.historical_data(instrument, from_date, to_date, interval)
+        return data
     except Exception as e:
-        return {"error": str(e)}
+        print("Candle fetch error:", e)
+        return []
+
+
+# ================== STRATEGIES ==================
+def check_strategy(symbol, strategy):
+    candles = get_candles(symbol)
+
+    if len(candles) < 50:
+        return None
+
+    df = pd.DataFrame(candles)
+
+    # --- SMA Crossover (9/21) ---
+    if strategy == "crossover":
+        df["sma_fast"] = df["close"].rolling(9).mean()
+        df["sma_slow"] = df["close"].rolling(21).mean()
+
+        if df["sma_fast"].iloc[-2] < df["sma_slow"].iloc[-2] and df["sma_fast"].iloc[-1] > df["sma_slow"].iloc[-1]:
+            return f"{symbol} BUY (SMA Cross)"
+
+    # --- Price Above SMA ---
+    elif strategy == "price":
+        df["sma"] = df["close"].rolling(20).mean()
+        if df["close"].iloc[-1] > df["sma"].iloc[-1]:
+            return f"{symbol} BUY (Price > SMA)"
+
+    # --- Triple SMA ---
+    elif strategy == "triple":
+        df["sma_short"] = df["close"].rolling(5).mean()
+        df["sma_mid"] = df["close"].rolling(13).mean()
+        df["sma_long"] = df["close"].rolling(34).mean()
+
+        if df["sma_short"].iloc[-1] > df["sma_mid"].iloc[-1] > df["sma_long"].iloc[-1]:
+            return f"{symbol} BUY (Triple SMA)"
+
+    return None

@@ -23,16 +23,17 @@
 
         <!-- Market Scan Card -->
         <div class="card">
-            <h2>Market Scan</h2>
-            <select id="strategySelect">
-  <option value="crossover">SMA Crossover</option>
-  <option value="price">Price Above SMA</option>
-  <option value="triple">Triple SMA Trend</option>
-</select>
+    <h2>Market Scan</h2>
 
-<button onclick="runScan()">Run Scan</button>
-<ul id="scanResults"></ul>
-        </div>
+    <select id="strategySelect">
+        <option value="crossover">SMA Crossover (9/21)</option>
+        <option value="price">Price Above SMA (20)</option>
+        <option value="triple">Triple SMA (5/13/34)</option>
+    </select>
+
+    <button onclick="runScan()">Run Scan</button>
+    <ul id="scanResults"></ul>
+</div>
 
         <!-- Place Order Card -->
         <div class="card">

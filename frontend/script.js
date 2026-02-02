@@ -19,8 +19,7 @@ async function refreshBalance() {
 async function runScan() {
     const strategy = document.getElementById("strategySelect").value;
     const resultsBox = document.getElementById("scanResults");
-
-    resultsBox.innerHTML = "Scanning...";
+    resultsBox.innerHTML = "<li>Scanning market...</li>";
 
     try {
         const response = await fetch(`/scan?strategy=${strategy}`);
@@ -28,20 +27,21 @@ async function runScan() {
 
         resultsBox.innerHTML = "";
 
-        if (data.signals.length > 0) {
+        if (data.signals && data.signals.length > 0) {
             data.signals.forEach(signal => {
                 const li = document.createElement("li");
                 li.textContent = signal;
                 resultsBox.appendChild(li);
             });
         } else {
-            resultsBox.innerHTML = "No BUY signals found";
+            resultsBox.innerHTML = "<li>No BUY signals found</li>";
         }
-    } catch (err) {
-        resultsBox.innerHTML = "Scan failed";
+
+    } catch (error) {
+        resultsBox.innerHTML = "<li>Scan failed</li>";
+        console.error(error);
     }
 }
-
 
 // -------- PLACE ORDER --------
 async function placeOrder() {
