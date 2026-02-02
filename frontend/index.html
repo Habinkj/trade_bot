@@ -1,98 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>AI Trading Bot</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #0f172a;
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .card {
-            background: #1e293b;
-            padding: 20px;
-            border-radius: 12px;
-            max-width: 420px;
-            margin: auto;
-            box-shadow: 0 0 15px rgba(0,0,0,0.3);
-        }
-
-        input, select, button {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 8px;
-            border: none;
-            font-size: 16px;
-        }
-
-        button { cursor: pointer; font-weight: bold; }
-
-        .login-btn { background: #2563eb; color: white; }
-        .scan-btn { background: #9333ea; color: white; }
-        .predict-btn { background: #16a34a; color: white; }
-        .approve-btn { background: #dc2626; color: white; }
-
-        #resultBox {
-            margin-top: 20px;
-            padding: 15px;
-            background: #334155;
-            border-radius: 10px;
-            font-size: 14px;
-            text-align: left;
-            white-space: pre-wrap;
-        }
-
-        h1 {
-            margin-bottom: 20px;
-        }
-
-        .divider {
-            margin: 10px 0;
-            opacity: 0.6;
-        }
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>TradeBot Dashboard</title>
+    <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-<h1>📈 AI Trading Bot</h1>
+    <header class="navbar">
+        <h1>TradeBot</h1>
+        <div class="status">
+            <span class="dot"></span> Live
+        </div>
+    </header>
 
-<div class="card">
+    <main class="dashboard">
 
-    <button class="login-btn" onclick="loginZerodha()">🔐 Login Zerodha</button>
+        <!-- Balance Card -->
+        <div class="card">
+            <h2>Account Balance</h2>
+            <p class="balance">₹<span id="balance">0</span></p>
+            <button onclick="getBalance()">Refresh</button>
+        </div>
 
-    <button class="scan-btn" onclick="scanMarket()">🔥 Show Best Stocks Today</button>
+        <!-- Scan Card -->
+        <div class="card">
+            <h2>Market Scan</h2>
+            <button class="scan-btn" onclick="runScan()">Run Scan</button>
+            <ul id="scanResults"></ul>
+        </div>
 
-    <select id="topStocks">
-        <option value="">Select Recommended Stock</option>
-    </select>
+        <!-- Order Card -->
+        <div class="card">
+            <h2>Place Order</h2>
 
-    <div class="divider">— OR —</div>
+            <input type="text" id="symbol" placeholder="Symbol (e.g. INFY)" />
+            <input type="number" id="qty" placeholder="Quantity" />
 
-    <input type="text" id="symbolInput" placeholder="Enter Stock Symbol Manually">
+            <select id="side">
+                <option value="BUY">BUY</option>
+                <option value="SELL">SELL</option>
+            </select>
 
-    <select id="smaSelect">
-        <option value="5_20">SMA 5 / 20 (Default)</option>
-        <option value="2_9">SMA 2 / 9 (Fast)</option>
-        <option value="10_50">SMA 10 / 50 (Swing)</option>
-    </select>
+            <button onclick="placeOrder()">Place Order</button>
+        </div>
 
-    <input type="number" id="qtyInput" value="1" min="1" max="5">
-
-    <button class="predict-btn" onclick="getPrediction()">📊 Get Prediction</button>
-
-    <button class="approve-btn" onclick="approveTrade()">✅ Approve Trade (REAL)</button>
-
-    <div id="resultBox">Waiting for action...</div>
-
-</div>
+    </main>
 
 <script src="script.js"></script>
-
 </body>
 </html>

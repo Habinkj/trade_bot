@@ -1,88 +1,91 @@
-const API = "http://https://tradebot-iuqd.onrender.com"; // change to Render URL when deployed
+const API = "https://tradebot-iuqd.onrender.com";
 
-function loginZerodha() {
-    window.open(API + "/login", "_blank");
+// Auto-refresh every 10 seconds
+setInterval(() => {
+    getBalance();
+    runScan();
+    checkStrategy();
+}, 10000);
+
+window.onload = () => {
+    getBalance();
+    runScan();
+    checkStrategy();
+};
+
+// -------- BALANCE --------
+async function getBalance() {
+    try {
+        const res = await fetch(`${API}/balance`);
+        const data = await res.json();
+        document.getElementById("balance").innerText = data.available_cash;
+    } catch (err) {
+        console.log("Balance fetch failed");
+    }
 }
 
-async function scanMarket() {
-    document.getElementById("resultBox").innerText = "Scanning market...";
-
+// -------- MARKET SCAN --------
+async function runScan() {
     try {
-        const res = await fetch(API + "/scan");
+        const res = await fetch(`${API}/scan`);
         const data = await res.json();
 
-        const dropdown = document.getElementById("topStocks");
-        dropdown.innerHTML = '<option value="">Select Recommended Stock</option>';
+        const list = document.getElementById("scanResults");
+        list.innerHTML = "";
 
-        data.forEach(stock => {
-            const option = document.createElement("option");
-            option.value = stock.symbol;
-            option.text = `${stock.symbol} (${stock.signal}, ${stock.confidence}%)`;
-            dropdown.appendChild(option);
+        if (data.signals.length === 0) {
+            list.innerHTML = "<li>No signals found</li>";
+            return;
+        }
+
+        data.signals.forEach(item => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+                <strong>${item.symbol}</strong> 
+                <span style="color:#2c3e50;">₹${item.price}</span>
+            `;
+            list.appendChild(li);
         });
 
-        document.getElementById("resultBox").innerText = "Top stocks loaded!";
     } catch (err) {
-        document.getElementById("resultBox").innerText = "Error scanning market.";
+        console.log("Scan failed");
     }
 }
 
-function getSelectedSymbol() {
-    const dropdown = document.getElementById("topStocks").value;
-    const manual = document.getElementById("symbolInput").value.trim();
-    return dropdown || manual;
-}
-
-async function getPrediction() {
-    const symbol = getSelectedSymbol();
-    const sma = document.getElementById("smaSelect").value;
-
-    if (!symbol) {
-        alert("Select or enter a stock symbol");
-        return;
-    }
-
-    document.getElementById("resultBox").innerText = "Getting prediction...";
+// -------- PLACE ORDER --------
+async function placeOrder() {
+    const symbol = document.getElementById("symbol").value;
+    const qty = parseInt(document.getElementById("qty").value);
+    const side = document.getElementById("side").value;
 
     try {
-        const res = await fetch(`${API}/predict?symbol=${symbol}&sma=${sma}`);
-        const data = await res.json();
-
-        document.getElementById("resultBox").innerHTML =
-            `📊 Signal: ${data.signal}
-📈 Confidence: ${data.confidence}%
-🧠 Reason: ${data.reason}`;
-    } catch (err) {
-        document.getElementById("resultBox").innerText = "Prediction failed.";
-    }
-}
-
-async function approveTrade() {
-    const symbol = getSelectedSymbol();
-    const qty = document.getElementById("qtyInput").value;
-
-    if (!symbol) {
-        alert("Select or enter a stock symbol");
-        return;
-    }
-
-    if (!confirm(`⚠️ Place REAL order for ${symbol} qty ${qty}?`)) return;
-
-    document.getElementById("resultBox").innerText = "Placing real order...";
-
-    try {
-        const res = await fetch(`${API}/order`, {
+        await fetch(`${API}/order`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ symbol, qty, side: "buy" })
+            body: JSON.stringify({ symbol, qty, side })
         });
 
+        alert("Order Sent 🚀");
+    } catch (err) {
+        alert("Order failed ❌");
+    }
+}
+
+// -------- STRATEGY STATUS --------
+async function checkStrategy() {
+    try {
+        const res = await fetch(`${API}/status`);
         const data = await res.json();
 
-        document.getElementById("resultBox").innerText =
-            "Order Response:\n" + JSON.stringify(data, null, 2);
+        const dot = document.querySelector(".dot");
+
+        if (data.running) {
+            dot.style.backgroundColor = "#2ecc71"; // green
+        } else {
+            dot.style.backgroundColor = "#e74c3c"; // red
+        }
 
     } catch (err) {
-        document.getElementById("resultBox").innerText = "Order failed.";
+        console.log("Status check failed");
     }
 }

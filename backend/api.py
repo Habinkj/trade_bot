@@ -18,10 +18,29 @@ class OrderRequest(BaseModel):
 def predict(req: PredictRequest):
     return generate_signal(req.symbol, req.mode)
 
-@router.get("/scan")
-def scan():
-    return scan_market()
+@app.get("/scan")
+def scan_market():
+    signals = strategy.scan()  # your existing signal list
+
+    results = []
+
+    for symbol in signals:
+        try:
+            price = broker.get_ltp(symbol)  # fetch live price
+        except:
+            price = "N/A"
+
+        results.append({
+            "symbol": symbol,
+            "price": price
+        })
+
+    return {"signals": results}
 
 @router.post("/order")
 def order(req: OrderRequest):
     return place_real_order(req.symbol, req.qty, req.side)
+
+@app.get("/status")
+def strategy_status():
+    return {"running": True}
