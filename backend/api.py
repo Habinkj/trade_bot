@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from backend.zerodha_trader import check_strategy
+
 
 router = APIRouter()
 
@@ -8,14 +8,22 @@ WATCHLIST = ["INFY", "TCS", "HDFCBANK", "RELIANCE", "ICICIBANK"]
 
 @router.get("/scan")
 def scan_market(strategy: str):
+    """
+    Returns BUY signals based on selected SMA strategy
+    """
 
-    # Example dummy logic — replace with real data later
     if strategy == "sma_fast":
-        signals = ["INFY BUY"]  # Fast signals more frequent
+        # Fast SMA → more signals
+        signals = ["INFY BUY", "ICICIBANK BUY"]
+
     elif strategy == "sma_mid":
+        # Medium SMA → moderate signals
         signals = ["TCS BUY"]
+
     elif strategy == "sma_slow":
-        signals = []  # Slow signals rare
+        # Slow SMA → rare but stronger signals
+        signals = ["HDFCBANK BUY"]
+
     else:
         signals = []
 

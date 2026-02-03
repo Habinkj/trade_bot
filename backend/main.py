@@ -102,6 +102,22 @@ def place_order(symbol: str, qty: int):
         return JSONResponse(status_code=500, content={"error": str(e)})
     
 
+#----balance check----
+@app.get("/balance")
+def get_balance():
+    global ACCESS_TOKEN
+
+    if not ACCESS_TOKEN:
+        return {"balance": 0}
+
+    try:
+        kite.set_access_token(ACCESS_TOKEN)
+        margins = kite.margins("equity")
+        cash = margins["available"]["cash"]
+        return {"balance": round(cash, 2)}
+    except Exception as e:
+        return {"balance": 0, "error": str(e)}
+
 @app.get("/")
 def serve_dashboard():
     return FileResponse("frontend/index.html")

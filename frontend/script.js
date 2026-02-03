@@ -73,3 +73,11 @@ async function placeOrder() {
         console.error("Order error:", error);
     }
 }
+
+
+async function refreshBalance() {
+    const res = await fetch("/balance");
+    const data = await res.json();
+
+    document.getElementById("balanceAmount").textContent = data.balance || 0;
+}
