@@ -19,21 +19,22 @@ async function refreshBalance() {
 async function runScan() {
     const strategy = document.getElementById("strategy").value;
 
-    const response = await fetch(`/scan?strategy=${strategy}`);
-    const data = await response.json();
+    const res = await fetch(`/scan?strategy=${strategy}`);
+    const data = await res.json();
 
-    const box = document.getElementById("scanResults");
-    box.innerHTML = "";
+    const list = document.getElementById("signalsList");
+    list.innerHTML = "";
 
-    if (data.signals.length > 0) {
-        data.signals.forEach(sig => {
-            const li = document.createElement("li");
-            li.textContent = sig;
-            box.appendChild(li);
-        });
-    } else {
-        box.innerHTML = "No BUY signals found";
+    if (data.signals.length === 0) {
+        list.innerHTML = "<li>No BUY signals found</li>";
+        return;
     }
+
+    data.signals.forEach(signal => {
+        const li = document.createElement("li");
+        li.textContent = signal;
+        list.appendChild(li);
+    });
 }
 
 // -------- PLACE ORDER --------

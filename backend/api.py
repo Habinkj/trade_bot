@@ -8,22 +8,12 @@ WATCHLIST = ["INFY", "TCS", "HDFCBANK", "RELIANCE", "ICICIBANK"]
 
 @router.get("/scan")
 def scan_market(strategy: str):
-    """
-    Returns BUY signals based on selected SMA strategy
-    """
-
     if strategy == "sma_fast":
-        # Fast SMA → more signals
-        signals = ["INFY BUY", "ICICIBANK BUY"]
-
+        signals = ["INFY BUY"]
     elif strategy == "sma_mid":
-        # Medium SMA → moderate signals
         signals = ["TCS BUY"]
-
     elif strategy == "sma_slow":
-        # Slow SMA → rare but stronger signals
-        signals = ["HDFCBANK BUY"]
-
+        signals = []
     else:
         signals = []
 
