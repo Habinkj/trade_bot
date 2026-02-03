@@ -1,3 +1,6 @@
+from backend.data_provider import get_ltp, get_historical
+from backend.strategy import sma_signal
+from backend.instruments import WATCHLIST
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -55,19 +58,32 @@ def callback(request: Request):
 
 
 # ============================================
-# 📊 MARKET SCAN (Dummy SMA scan for UI)
+# 📊 MARKET SCAN 
 # ============================================
 @app.get("/scan")
-def scan_market():
+def scan_market(strategy: str):
     if ACCESS_TOKEN is None:
         return JSONResponse(status_code=401, content={"error": "Login required"})
 
-    # Example mock response — replace with real strategy later
-    return [
-        {"symbol": "RELIANCE", "price": 2450, "signal": "BUY"},
-        {"symbol": "INFY", "price": 1580, "signal": "BUY"},
-        {"symbol": "TCS", "price": 4020, "signal": "BUY"},
-    ]
+    results = []
+
+    for symbol in WATCHLIST:
+        try:
+            candles = get_historical(symbol, interval="5minute", days=5)
+            signal = sma_signal(candles, strategy)
+
+            if signal == "BUY":
+                ltp = get_ltp(symbol)
+                results.append({
+                    "symbol": symbol,
+                    "price": round(ltp, 2),
+                    "signal": "BUY"
+                })
+
+        except Exception as e:
+            print(f"Scan error for {symbol}: {e}")
+
+    return results
 
 
 # ============================================
