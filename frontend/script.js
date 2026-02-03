@@ -18,23 +18,31 @@ async function refreshBalance() {
 // -------- MARKET SCAN --------
 async function runScan() {
     const strategy = document.getElementById("strategy").value;
+    const signalsList = document.getElementById("signalsList");
 
-    const res = await fetch(`/scan?strategy=${strategy}`);
-    const data = await res.json();
+    signalsList.innerHTML = "Scanning...";
 
-    const list = document.getElementById("signalsList");
-    list.innerHTML = "";
+    try {
+        const response = await fetch(`/scan?strategy=${strategy}`);
+        const data = await response.json();
 
-    if (data.signals.length === 0) {
-        list.innerHTML = "<li>No BUY signals found</li>";
-        return;
+        signalsList.innerHTML = "";
+
+        if (data.signals.length === 0) {
+            signalsList.innerHTML = "<li>No BUY signals found</li>";
+            return;
+        }
+
+        data.signals.forEach(signal => {
+            const li = document.createElement("li");
+            li.textContent = signal;
+            signalsList.appendChild(li);
+        });
+
+    } catch (error) {
+        signalsList.innerHTML = "<li>Error connecting to server</li>";
+        console.error(error);
     }
-
-    data.signals.forEach(signal => {
-        const li = document.createElement("li");
-        li.textContent = signal;
-        list.appendChild(li);
-    });
 }
 
 // -------- PLACE ORDER --------
