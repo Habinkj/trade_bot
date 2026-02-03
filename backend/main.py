@@ -1,10 +1,13 @@
 from fastapi import FastAPI, Request
-from fastapi.staticfiles import staticfiles
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse, JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from kiteconnect import KiteConnect
 import os
 
 app = FastAPI()
+
+# Serve CSS + JS
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
 # ====== CONFIG (from Render Environment) ======
 API_KEY = os.getenv("KITE_API_KEY")
@@ -97,3 +100,13 @@ def place_order(symbol: str, qty: int):
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
+    
+
+    @app.get("/")
+def serve_dashboard():
+    return FileResponse("frontend/index.html")
+
+
+@app.get("/")
+def home():
+    return FileResponse("frontend/index.html")
