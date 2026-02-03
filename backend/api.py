@@ -2,10 +2,10 @@ from fastapi import APIRouter
 from backend.zerodha_trader import get_candles
 from backend.strategy import sma_signal
 from backend.instruments import get_token
+from bacend.instrucments import WATCHLIST
 
 router = APIRouter()
 
-WATCHLIST = ["RELIANCE", "INFY", "TCS", "HDFCBANK"]
 
 @router.get("/scan")
 def scan_market(strategy: str):
