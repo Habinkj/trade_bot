@@ -102,7 +102,7 @@ def place_order(symbol: str, qty: int):
         return JSONResponse(status_code=500, content={"error": str(e)})
     
 
-    @app.get("/")
+@app.get("/")
 def serve_dashboard():
     return FileResponse("frontend/index.html")
 
