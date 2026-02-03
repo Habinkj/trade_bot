@@ -18,7 +18,7 @@ def check_strategy(symbol, strategy):
     df["fast"] = df["close"].rolling(fast).mean()
     df["slow"] = df["close"].rolling(slow).mean()
 
-    if df["fast"].iloc[-1] > df["slow"].iloc[-1] and df["fast"].iloc[-2] <= df["slow"].iloc[-2]:
-        return "BUY", df["close"].iloc[-1]
+    if df["fast"].iloc[-1] > df["slow"].iloc[-1]:
+    return "BUY", df["close"].iloc[-1]
 
     return None, df["close"].iloc[-1]
