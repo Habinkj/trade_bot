@@ -1,25 +1,38 @@
 from fastapi import APIRouter
-
+from backend.zerodha_trader import get_candles
+from backend.strategy import sma_signal
+from backend.instruments import get_token
 
 router = APIRouter()
 
-WATCHLIST = ["INFY", "TCS", "HDFCBANK", "RELIANCE", "ICICIBANK"]
-
+WATCHLIST = ["RELIANCE", "INFY", "TCS", "HDFCBANK"]
 
 @router.get("/scan")
 def scan_market(strategy: str):
-    if strategy == "sma_fast":
-        signals = ["INFY BUY"]
-    elif strategy == "sma_mid":
-        signals = ["TCS BUY"]
-    elif strategy == "sma_slow":
-        signals = []
-    else:
-        signals = []
+    results = []
 
-    return {"signals": signals}
+    for symbol in WATCHLIST:
+        token = get_token(symbol)
+        if not token:
+            continue
 
+        candles = get_candles(token)
 
-@router.get("/status")
-def status():
-    return {"bot": "running", "market": "open"}
+        if strategy == "sma_fast":
+            signal = sma_signal(candles, 5, 9)
+        elif strategy == "sma_mid":
+            signal = sma_signal(candles, 9, 21)
+        elif strategy == "sma_slow":
+            signal = sma_signal(candles, 5, 34)
+        else:
+            signal = None
+
+        if signal == "BUY":
+            price = candles[-1]["close"]
+            results.append({
+                "symbol": symbol,
+                "price": price,
+                "signal": "BUY"
+            })
+
+    return results
