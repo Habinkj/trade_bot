@@ -26,12 +26,13 @@ async function runScan() {
         const response = await fetch(`/scan?strategy=${strategy}`);
         const data = await response.json();
 
+        resultBox.innerHTML = "";
+
         if (data.length === 0) {
             resultBox.innerHTML = "<li>No BUY signals found</li>";
             return;
         }
 
-        resultBox.innerHTML = "";
         data.forEach(stock => {
             resultBox.innerHTML += `<li>${stock.symbol} - ₹${stock.price} - ${stock.signal}</li>`;
         });
