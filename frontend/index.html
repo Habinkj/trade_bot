@@ -25,11 +25,11 @@
         <div class="card">
     <h2>Market Scan</h2>
 
-    <select id="strategySelect">
-        <option value="crossover">SMA Crossover (9/21)</option>
-        <option value="price">Price Above SMA (20)</option>
-        <option value="triple">Triple SMA (5/13/34)</option>
-    </select>
+    <select id="strategy">
+  <option value="sma_fast">Fast SMA (5/9)</option>
+  <option value="sma_mid">Medium SMA (9/21)</option>
+  <option value="sma_slow">Triple SMA (5/13/34)</option>
+</select>
 
     <button onclick="runScan()">Run Scan</button>
     <ul id="scanResults"></ul>
@@ -42,10 +42,8 @@
             <input type="text" id="symbol" placeholder="Symbol (e.g. INFY)">
             <input type="number" id="quantity" placeholder="Quantity">
 
-            <select id="side">
-                <option value="BUY">BUY</option>
-                <option value="SELL">SELL</option>
-            </select>
+            <input type="hidden" id="side" value="BUY">
+<p>Orders are BUY only. Exit handled by Trailing Stop Loss.</p>
 
             <button onclick="placeOrder()">Place Order</button>
             <p id="orderResult" class="order-result"></p>

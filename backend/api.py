@@ -7,13 +7,17 @@ WATCHLIST = ["INFY", "TCS", "HDFCBANK", "RELIANCE", "ICICIBANK"]
 
 
 @router.get("/scan")
-def scan_market(strategy: str = "crossover"):
-    signals = []
+def scan_market(strategy: str):
 
-    for symbol in WATCHLIST:
-        result = check_strategy(symbol, strategy)
-        if result:
-            signals.append(result)
+    # Example dummy logic — replace with real data later
+    if strategy == "sma_fast":
+        signals = ["INFY BUY"]  # Fast signals more frequent
+    elif strategy == "sma_mid":
+        signals = ["TCS BUY"]
+    elif strategy == "sma_slow":
+        signals = []  # Slow signals rare
+    else:
+        signals = []
 
     return {"signals": signals}
 

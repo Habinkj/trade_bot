@@ -26,6 +26,7 @@ def get_candles(symbol, interval="5minute", days=5):
         return []
 
 
+
 # ================== STRATEGIES ==================
 def check_strategy(symbol, strategy):
     candles = get_candles(symbol)
@@ -59,3 +60,12 @@ def check_strategy(symbol, strategy):
             return f"{symbol} BUY (Triple SMA)"
 
     return None
+
+#------- trailing stop loss --------
+
+def manage_trailing_sl(symbol, entry_price):
+    trail_percent = 1.5  # Example 1.5%
+    stop_price = entry_price * (1 - trail_percent / 100)
+
+    # Continuously monitor LTP
+    # If price drops to stop_price → place SELL

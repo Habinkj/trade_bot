@@ -17,29 +17,22 @@ async function refreshBalance() {
 
 // -------- MARKET SCAN --------
 async function runScan() {
-    const strategy = document.getElementById("strategySelect").value;
-    const resultsBox = document.getElementById("scanResults");
-    resultsBox.innerHTML = "<li>Scanning market...</li>";
+    const strategy = document.getElementById("strategy").value;
 
-    try {
-        const response = await fetch(`/scan?strategy=${strategy}`);
-        const data = await response.json();
+    const response = await fetch(`/scan?strategy=${strategy}`);
+    const data = await response.json();
 
-        resultsBox.innerHTML = "";
+    const box = document.getElementById("scanResults");
+    box.innerHTML = "";
 
-        if (data.signals && data.signals.length > 0) {
-            data.signals.forEach(signal => {
-                const li = document.createElement("li");
-                li.textContent = signal;
-                resultsBox.appendChild(li);
-            });
-        } else {
-            resultsBox.innerHTML = "<li>No BUY signals found</li>";
-        }
-
-    } catch (error) {
-        resultsBox.innerHTML = "<li>Scan failed</li>";
-        console.error(error);
+    if (data.signals.length > 0) {
+        data.signals.forEach(sig => {
+            const li = document.createElement("li");
+            li.textContent = sig;
+            box.appendChild(li);
+        });
+    } else {
+        box.innerHTML = "No BUY signals found";
     }
 }
 
