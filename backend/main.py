@@ -5,7 +5,7 @@ from kiteconnect import KiteConnect
 import os
 
 from backend.data_provider import get_ltp, get_historical
-from backend.strategy import sma_signal
+from backend.strategy import check_strategy
 from backend.instruments import WATCHLIST
 
 
@@ -70,14 +70,12 @@ def scan_market(strategy: str):
 
     for symbol in WATCHLIST:
         try:
-            candles = get_historical(symbol, interval="5minute", days=5)
-            signal = sma_signal(candles, strategy)
+            signal, price = check_strategy(symbol, strategy)
 
             if signal == "BUY":
-                ltp = get_ltp(symbol)
                 results.append({
                     "symbol": symbol,
-                    "price": round(ltp, 2),
+                    "price": round(price, 2),
                     "signal": "BUY"
                 })
 
