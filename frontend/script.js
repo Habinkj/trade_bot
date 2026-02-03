@@ -18,29 +18,26 @@ async function refreshBalance() {
 // -------- MARKET SCAN --------
 async function runScan() {
     const strategy = document.getElementById("strategy").value;
-    const signalsList = document.getElementById("signalsList");
+    const resultBox = document.getElementById("scanResults");
 
-    signalsList.innerHTML = "Scanning...";
+    resultBox.innerHTML = "Scanning market...";
 
     try {
         const response = await fetch(`/scan?strategy=${strategy}`);
         const data = await response.json();
 
-        signalsList.innerHTML = "";
-
-        if (data.signals.length === 0) {
-            signalsList.innerHTML = "<li>No BUY signals found</li>";
+        if (data.length === 0) {
+            resultBox.innerHTML = "<li>No BUY signals found</li>";
             return;
         }
 
-        data.signals.forEach(signal => {
-            const li = document.createElement("li");
-            li.textContent = signal;
-            signalsList.appendChild(li);
+        resultBox.innerHTML = "";
+        data.forEach(stock => {
+            resultBox.innerHTML += `<li>${stock.symbol} - ₹${stock.price} - ${stock.signal}</li>`;
         });
 
     } catch (error) {
-        signalsList.innerHTML = "<li>Error connecting to server</li>";
+        resultBox.innerHTML = "<li>Error connecting to server</li>";
         console.error(error);
     }
 }
