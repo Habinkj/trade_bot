@@ -1,6 +1,4 @@
 from backend.data_provider import get_historical
-import pandas as pd
-
 
 def check_strategy(symbol, strategy):
     df = get_historical(symbol)
@@ -20,8 +18,8 @@ def check_strategy(symbol, strategy):
     df["fast"] = df["close"].rolling(fast).mean()
     df["slow"] = df["close"].rolling(slow).mean()
 
-    # --- Buy signal: Fast crosses above Slow ---
+    # --- TEST LOGIC (trend only, not crossover) ---
     if df["fast"].iloc[-1] > df["slow"].iloc[-1]:
-    return "BUY", float(df["close"].iloc[-1])
+        return "BUY", float(df["close"].iloc[-1])
 
     return None, float(df["close"].iloc[-1])
