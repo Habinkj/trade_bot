@@ -21,10 +21,7 @@ def check_strategy(symbol, strategy):
     df["slow"] = df["close"].rolling(slow).mean()
 
     # --- Buy signal: Fast crosses above Slow ---
-    if (
-        df["fast"].iloc[-1] > df["slow"].iloc[-1]
-        and df["fast"].iloc[-2] <= df["slow"].iloc[-2]
-    ):
-        return "BUY", float(df["close"].iloc[-1])
+    if df["fast"].iloc[-1] > df["slow"].iloc[-1]:
+    return "BUY", float(df["close"].iloc[-1])
 
     return None, float(df["close"].iloc[-1])
