@@ -1,40 +1,34 @@
 import os
-import json
 from kiteconnect import KiteConnect
 
-TOKEN_FILE = "backend/data/session.json"
+API_KEY = os.getenv("KITE_API_KEY")
+API_SECRET = os.getenv("KITE_API_SECRET")
 
-def save_access_token(access_token: str):
-    """Save access token to file after login"""
-    os.makedirs("backend/data", exist_ok=True)
+TOKEN_FILE = "access_token.txt"
+
+
+def get_login_url():
+    kite = KiteConnect(api_key=API_KEY)
+    return kite.login_url()
+
+
+def save_access_token(token):
     with open(TOKEN_FILE, "w") as f:
-        json.dump({"access_token": access_token}, f)
+        f.write(token)
 
 
-def load_access_token():
-    """Load saved access token"""
+def get_access_token():
     if not os.path.exists(TOKEN_FILE):
         return None
-
     with open(TOKEN_FILE, "r") as f:
-        data = json.load(f)
-        return data.get("access_token")
+        return f.read().strip()
 
 
 def get_kite():
-    """
-    Create Kite session safely.
-    Will not crash server if user not logged in yet.
-    """
-    api_key = os.getenv("ZERODHA_API_KEY")
-    if not api_key:
-        raise Exception("ZERODHA_API_KEY not set")
-
-    kite = KiteConnect(api_key=api_key)
-
-    access_token = load_access_token()
-    if not access_token:
+    token = get_access_token()
+    if not token:
         raise Exception("Login required")
 
-    kite.set_access_token(access_token)
+    kite = KiteConnect(api_key=API_KEY)
+    kite.set_access_token(token)
     return kite
