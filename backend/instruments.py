@@ -12,20 +12,17 @@ def load_instruments():
         for inst in instruments
     }
 
-def get_token(symbol: str):
-    if not instrument_map:
-        load_instruments()
-    token = instrument_map.get(symbol)
-    if not token:
-        raise Exception(f"Token not found for {symbol}")
-    return token
+
+
 
 def get_token(symbol):
     kite = get_kite()
     instruments = kite.instruments("NSE")
 
+    symbol = symbol.upper().strip()
+
     for inst in instruments:
-        if inst["tradingsymbol"] == symbol:
+        if inst["tradingsymbol"] == symbol and inst["exchange"] == "NSE":
             return inst["instrument_token"]
 
     raise Exception(f"Token not found for {symbol}")
