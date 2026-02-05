@@ -6,13 +6,16 @@ from fastapi.responses import RedirectResponse
 from kiteconnect import KiteConnect
 import os
 from backend.zerodha_session import save_access_token
+from backend.zerodha_session import get_kite
+
+kite = get_kite()
 
 router = APIRouter()
 
 API_KEY = os.getenv("ZERODHA_API_KEY")
 API_SECRET = os.getenv("ZERODHA_API_SECRET")
 
-kite = KiteConnect(api_key=API_KEY)
+
 
 @router.get("/scan")
 def scan_market(strategy: str = "sma"):

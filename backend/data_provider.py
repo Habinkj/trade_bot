@@ -1,11 +1,14 @@
 from kiteconnect import KiteConnect
 import os
 from datetime import datetime, timedelta
+from backend.zerodha_session import get_kite
+
+kite = get_kite()
 
 API_KEY = os.getenv("KITE_API_KEY")
 ACCESS_TOKEN = os.getenv("KITE_ACCESS_TOKEN")
 
-kite = KiteConnect(api_key=API_KEY)
+
 kite.set_access_token(ACCESS_TOKEN)
 
 
