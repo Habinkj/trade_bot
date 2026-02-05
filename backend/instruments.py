@@ -1,5 +1,12 @@
-from fastapi import FastAPI
-from backend.api import router
+import json
+import os
 
-app = FastAPI()
-app.include_router(router)
+INSTRUMENT_FILE = "config/symbols.json"
+
+def load_instruments():
+    with open(INSTRUMENT_FILE, "r") as f:
+        return json.load(f)
+
+def get_token(symbol):
+    instruments = load_instruments()
+    return instruments.get(symbol)
