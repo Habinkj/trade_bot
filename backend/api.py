@@ -6,9 +6,9 @@ import os
 from backend.zerodha_session import get_kite, get_login_url, save_access_token
 from backend.data_provider import get_historical
 from backend.strategy import (
-    sma_fast_signal,
-    sma_slow_signal,
-    sma_cross_signal,
+    sma_5_10_signal,
+    sma_9_21_signal,
+    sma_15_20_signal,
     ema_cross_signal
 )
 from backend.config_loader import load_watchlist
@@ -53,12 +53,12 @@ def scan(strategy: str):
         try:
             df = get_historical(symbol)
 
-            if strategy == "sma_fast":
-                signal = sma_fast_signal(df)
-            elif strategy == "sma_slow":
-                signal = sma_slow_signal(df)
-            elif strategy == "sma_cross":
-                signal = sma_cross_signal(df)
+            if strategy == "sma_5_10":
+                signal = sma_5_10_signal(df)
+            elif strategy == "sma_9_21":
+                signal = sma_9_21_signal(df)
+            elif strategy == "sma_15_20":
+                signal = sma_15_20_signal(df)
             elif strategy == "ema_cross":
                 signal = ema_cross_signal(df)
             else:

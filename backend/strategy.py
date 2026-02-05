@@ -1,26 +1,47 @@
 import pandas as pd
 
+# -------- SMA (5,10) --------
+def sma_5_10_signal(df):
+    df["sma_5"] = df["close"].rolling(5).mean()
+    df["sma_10"] = df["close"].rolling(10).mean()
 
-# ---------- SMA FAST ----------
-def sma_fast_signal(df):
-    df["sma_fast"] = df["close"].rolling(5).mean()
-    return "BUY" if df["close"].iloc[-1] > df["sma_fast"].iloc[-1] else "HOLD"
+    prev_fast = df["sma_5"].iloc[-2]
+    prev_slow = df["sma_10"].iloc[-2]
+    curr_fast = df["sma_5"].iloc[-1]
+    curr_slow = df["sma_10"].iloc[-1]
 
-
-# ---------- SMA SLOW ----------
-def sma_slow_signal(df):
-    df["sma_slow"] = df["close"].rolling(20).mean()
-    return "BUY" if df["close"].iloc[-1] > df["sma_slow"].iloc[-1] else "HOLD"
-
-
-# ---------- SMA CROSSOVER ----------
-def sma_cross_signal(df):
-    df["sma_fast"] = df["close"].rolling(9).mean()
-    df["sma_slow"] = df["close"].rolling(21).mean()
-
-    if df["sma_fast"].iloc[-2] < df["sma_slow"].iloc[-2] and df["sma_fast"].iloc[-1] > df["sma_slow"].iloc[-1]:
+    if prev_fast <= prev_slow and curr_fast > curr_slow:
         return "BUY"
+    return "HOLD"
 
+
+# -------- SMA (9,21) --------
+def sma_9_21_signal(df):
+    df["sma_9"] = df["close"].rolling(9).mean()
+    df["sma_21"] = df["close"].rolling(21).mean()
+
+    prev_fast = df["sma_9"].iloc[-2]
+    prev_slow = df["sma_21"].iloc[-2]
+    curr_fast = df["sma_9"].iloc[-1]
+    curr_slow = df["sma_21"].iloc[-1]
+
+    if prev_fast <= prev_slow and curr_fast > curr_slow:
+        return "BUY"
+    return "HOLD"
+
+
+# -------- SMA (15,20) --------
+def sma_15_20_signal(df):
+    df["sma_15"] = df["close"].rolling(15).mean()
+    df["sma_20"] = df["close"].rolling(20).mean()
+
+    prev_fast = df["sma_15"].iloc[-2]
+    prev_slow = df["sma_20"].iloc[-2]
+    curr_fast = df["sma_15"].iloc[-1]
+    curr_slow = df["sma_20"].iloc[-1]
+
+    if prev_fast <= prev_slow and curr_fast > curr_slow:
+        return "BUY"
     return "HOLD"
 
 
