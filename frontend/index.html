@@ -25,11 +25,7 @@
         <div class="card">
     <h2>Market Scan</h2>
 
-    <select id="strategy">
-        <option value="sma_fast">Fast SMA (5/9)</option>
-        <option value="sma_mid">Medium SMA (9/21)</option>
-        <option value="sma_slow">Triple SMA (5/13/34)</option>
-    </select>
+    <select id="strategy"></select>
 
     <button onclick="runScan()">Run Scan</button>
 
@@ -44,7 +40,7 @@
             <input type="number" id="quantity" placeholder="Quantity">
 
             <input type="hidden" id="side" value="BUY">
-<p>Orders are BUY only. Exit handled by Trailing Stop Loss.</p>
+<p>Investment in securities market are subject to market risks. Read all the related documents carefully before investing</p>
 
             <button onclick="placeOrder()">Place Order</button>
             <p id="orderResult" class="order-result"></p>

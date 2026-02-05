@@ -1,17 +1,53 @@
-from backend.indicators import calculate_sma, calculate_ema
+import pandas as pd
 
-def sma_signal(df, fast=5, slow=9):
-    df["fast"] = calculate_sma(df, fast)
-    df["slow"] = calculate_sma(df, slow)
+def sma_fast_signal(df):
+    df["sma_fast"] = df["close"].rolling(5).mean()
+    return "BUY" if df["close"].iloc[-1] > df["sma_fast"].iloc[-1] else "HOLD"
 
-    if df["fast"].iloc[-1] > df["slow"].iloc[-1] and df["fast"].iloc[-2] <= df["slow"].iloc[-2]:
+
+def sma_slow_signal(df):
+    df["sma_slow"] = df["close"].rolling(20).mean()
+    return "BUY" if df["close"].iloc[-1] > df["sma_slow"].iloc[-1] else "HOLD"
+
+
+def sma_cross_signal(df):
+    df["sma_fast"] = df["close"].rolling(9).mean()
+    df["sma_slow"] = df["close"].rolling(21).mean()
+
+    if df["sma_fast"].iloc[-2] < df["sma_slow"].iloc[-2] and df["sma_fast"].iloc[-1] > df["sma_slow"].iloc[-1]:
         return "BUY"
-    return None
 
-def ema_signal(df, fast=9, slow=21):
-    df["fast"] = calculate_ema(df, fast)
-    df["slow"] = calculate_ema(df, slow)
+    return "HOLD"
 
-    if df["fast"].iloc[-1] > df["slow"].iloc[-1] and df["fast"].iloc[-2] <= df["slow"].iloc[-2]:
+
+def ema_cross_signal(df):
+    df["ema_fast"] = df["close"].ewm(span=9, adjust=False).mean()
+    df["ema_slow"] = df["close"].ewm(span=21, adjust=False).mean()
+
+    # Previous candle
+    prev_fast = df["ema_fast"].iloc[-2]
+    prev_slow = df["ema_slow"].iloc[-2]
+
+    # Current candle
+    curr_fast = df["ema_fast"].iloc[-1]
+    curr_slow = df["ema_slow"].iloc[-1]
+
+    # Bullish crossover
+    if prev_fast <= prev_slow and curr_fast > curr_slow:
         return "BUY"
-    return None
+
+    return "HOLD"
+
+def ema_cross_signal(df):
+    df["ema_fast"] = df["close"].ewm(span=9, adjust=False).mean()
+    df["ema_slow"] = df["close"].ewm(span=21, adjust=False).mean()
+
+    prev_fast = df["ema_fast"].iloc[-2]
+    prev_slow = df["ema_slow"].iloc[-2]
+    curr_fast = df["ema_fast"].iloc[-1]
+    curr_slow = df["ema_slow"].iloc[-1]
+
+    if prev_fast <= prev_slow and curr_fast > curr_slow:
+        return "BUY"
+
+    return "HOLD"

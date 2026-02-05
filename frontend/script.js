@@ -1,4 +1,31 @@
-// -------- BALANCE --------
+// -------- STRATEGY OPTIONS --------
+const strategies = {
+    "Fast SMA (5/9)": "sma_fast",
+    "Medium SMA (9/21)": "sma_medium",
+    "Triple SMA (5/13/34)": "sma_triple",
+
+    // NEW EMA STRATEGIES
+    "EMA Crossover (9/21)": "ema_cross",
+    "Fast EMA (5/9)": "ema_fast"
+};
+
+// Load strategies into dropdown when page loads
+window.addEventListener("DOMContentLoaded", () => {
+    const strategySelect = document.getElementById("strategy");
+
+    // Prevent duplicates if already present
+    strategySelect.innerHTML = "";
+
+    for (let label in strategies) {
+        const option = document.createElement("option");
+        option.text = label;
+        option.value = strategies[label];
+        strategySelect.add(option);
+    }
+});/
+
+
+/ -------- BALANCE --------
 async function refreshBalance() {
     const balanceEl = document.getElementById("balanceAmount");
     balanceEl.innerText = "Loading...";

@@ -6,6 +6,13 @@ from fastapi.responses import RedirectResponse
 from kiteconnect import KiteConnect
 import os
 from backend.zerodha_session import save_access_token
+from backend.strategy import ema_cross_signal
+from backend.strategy import (
+    sma_fast_signal,
+    sma_slow_signal,
+    sma_cross_signal,
+    ema_cross_signal   # 👈 ADD THIS
+)
 
 router = APIRouter()
 
@@ -17,7 +24,7 @@ kite = KiteConnect(api_key=API_KEY)  # ✅ this is OK (does NOT need login yet)
 
 
 @router.get("/scan")
-def scan_market(strategy: str = "sma"):
+def scan_market(strategy: str = "sma_cross"):
     watchlist = load_watchlist()
     results = []
 
@@ -25,10 +32,21 @@ def scan_market(strategy: str = "sma"):
         try:
             df = get_historical(symbol)
 
-            if strategy == "sma":
-                signal = sma_signal(df)
+            if strategy == "sma_fast":
+                signal = sma_fast_signal(df)
+
+            elif strategy == "sma_slow":
+                signal = sma_slow_signal(df)
+
+            elif strategy == "sma_cross":
+                signal = sma_cross_signal(df)
+
+            elif strategy == "ema_cross":
+                signal = ema_cross_signal(df)
+            
+
             else:
-                signal = ema_signal(df)
+                raise ValueError("Invalid strategy")
 
             if signal == "BUY":
                 results.append(symbol)
