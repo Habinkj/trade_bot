@@ -15,11 +15,11 @@ def get_access_token():
 
 def get_kite():
     api_key = os.getenv("ZERODHA_API_KEY")
-    kite = KiteConnect(api_key=api_key)
-
     access_token = get_access_token()
+
     if not access_token:
         raise Exception("Login required")
 
-    kite.set_access_token(access_token)
+    kite = KiteConnect(api_key=api_key)
+    kite.set_access_token(access_token)   # ⭐ THIS WAS MISSING
     return kite
