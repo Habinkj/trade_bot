@@ -1,25 +1,17 @@
-from backend.data_provider import get_historical
+from backend.indicators import calculate_sma, calculate_ema
 
-def check_strategy(symbol, strategy):
-    df = get_historical(symbol)
+def sma_signal(df, fast=5, slow=9):
+    df["fast"] = calculate_sma(df, fast)
+    df["slow"] = calculate_sma(df, slow)
 
-    if df is None or len(df) < 50:
-        return None, None
+    if df["fast"].iloc[-1] > df["slow"].iloc[-1] and df["fast"].iloc[-2] <= df["slow"].iloc[-2]:
+        return "BUY"
+    return None
 
-    # --- Select SMA settings ---
-    if strategy == "sma_fast":
-        fast, slow = 5, 9
-    elif strategy == "sma_mid":
-        fast, slow = 9, 21
-    else:  # sma_slow
-        fast, slow = 13, 34
+def ema_signal(df, fast=9, slow=21):
+    df["fast"] = calculate_ema(df, fast)
+    df["slow"] = calculate_ema(df, slow)
 
-    # --- Calculate moving averages ---
-    df["fast"] = df["close"].rolling(fast).mean()
-    df["slow"] = df["close"].rolling(slow).mean()
-
-    # --- TEST LOGIC (trend only, not crossover) ---
-    if df["fast"].iloc[-1] > df["slow"].iloc[-1]:
-        return "BUY", float(df["close"].iloc[-1])
-
-    return None, float(df["close"].iloc[-1])
+    if df["fast"].iloc[-1] > df["slow"].iloc[-1] and df["fast"].iloc[-2] <= df["slow"].iloc[-2]:
+        return "BUY"
+    return None

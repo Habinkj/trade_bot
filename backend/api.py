@@ -1,38 +1,28 @@
 from fastapi import APIRouter
-from backend.zerodha_trader import get_candles
-from backend.strategy import sma_signal
-from backend.instruments import get_token
-from bacend.instrucments import WATCHLIST
+from backend.data_provider import get_historical
+from backend.strategy import sma_signal, ema_signal
+from backend.config_loader import load_watchlist
 
 router = APIRouter()
 
-
 @router.get("/scan")
-def scan_market(strategy: str):
+def scan_market(strategy: str = "sma"):
+    watchlist = load_watchlist()
     results = []
 
-    for symbol in WATCHLIST:
-        token = get_token(symbol)
-        if not token:
-            continue
+    for symbol in watchlist:
+        try:
+            df = get_historical(symbol)
 
-        candles = get_candles(token)
+            if strategy == "sma":
+                signal = sma_signal(df)
+            else:
+                signal = ema_signal(df)
 
-        if strategy == "sma_fast":
-            signal = sma_signal(candles, 5, 9)
-        elif strategy == "sma_mid":
-            signal = sma_signal(candles, 9, 21)
-        elif strategy == "sma_slow":
-            signal = sma_signal(candles, 5, 34)
-        else:
-            signal = None
+            if signal == "BUY":
+                results.append(symbol)
 
-        if signal == "BUY":
-            price = candles[-1]["close"]
-            results.append({
-                "symbol": symbol,
-                "price": price,
-                "signal": "BUY"
-            })
+        except Exception as e:
+            print(f"Scan error for {symbol}: {e}")
 
     return results

@@ -1,31 +1,16 @@
-from kiteconnect import KiteConnect
-import os
-from datetime import datetime, timedelta
+import pandas as pd
+from backend.zerodha_session import get_kite
+from backend.instruments import get_token
 
-API_KEY = os.getenv("KITE_API_KEY")
-ACCESS_TOKEN = os.getenv("KITE_ACCESS_TOKEN")
+def get_historical(symbol, interval="5minute", days=5):
+    kite = get_kite()
+    token = get_token(symbol)
 
-kite = KiteConnect(api_key=API_KEY)
-kite.set_access_token(ACCESS_TOKEN)
-
-def get_candles(instrument_token):
+    from datetime import datetime, timedelta
     to_date = datetime.now()
-    from_date = to_date - timedelta(days=5)
+    from_date = to_date - timedelta(days=days)
 
-    data = kite.historical_data(
-        instrument_token=instrument_token,
-        from_date=from_date,
-        to_date=to_date,
-        interval="5minute"
-    )
+    candles = kite.historical_data(token, from_date, to_date, interval)
 
-    return data
-
-#------- trailing stop loss --------
-
-def manage_trailing_sl(symbol, entry_price):
-    trail_percent = 1.5  # Example 1.5%
-    stop_price = entry_price * (1 - trail_percent / 100)
-
-    # Continuously monitor LTP
-    # If price drops to stop_price → place SELL
+    df = pd.DataFrame(candles)
+    return df
