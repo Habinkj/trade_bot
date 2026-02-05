@@ -25,7 +25,12 @@
         <div class="card">
     <h2>Market Scan</h2>
 
-    <select id="strategy"></select>
+    <select id="strategy">
+    <option value="sma_fast">Fast SMA (5)</option>
+    <option value="sma_slow">Slow SMA (20)</option>
+    <option value="sma_cross">SMA Crossover (9/21)</option>
+    <option value="ema_cross">EMA Crossover (9/21)</option>
+</select>
 
     <button onclick="runScan()">Run Scan</button>
 
