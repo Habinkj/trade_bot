@@ -1,12 +1,15 @@
-import json
-import os
+from backend.zerodha_session import get_kite
 
-INSTRUMENT_FILE = "config/symbols.json"
+instrument_map = {}
 
 def load_instruments():
-    with open(INSTRUMENT_FILE, "r") as f:
-        return json.load(f)
+    global instrument_map
+    kite = get_kite()
+    instruments = kite.instruments("NSE")
 
-def get_token(symbol):
-    instruments = load_instruments()
-    return instruments.get(symbol)
+    instrument_map = {inst["tradingsymbol"]: inst["instrument_token"] for inst in instruments}
+
+def get_token(symbol: str):
+    if not instrument_map:
+        load_instruments()
+    return instrument_map.get(symbol)
