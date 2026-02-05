@@ -1,25 +1,19 @@
 from backend.zerodha_session import get_kite
 
-instrument_map = {}
+# Cache instruments so we don't download every time
+_instruments_cache = None
 
-def load_instruments():
-    global instrument_map
-    kite = get_kite()
-    instruments = kite.instruments("NSE")
-
-    instrument_map = {
-        inst["tradingsymbol"]: inst["instrument_token"]
-        for inst in instruments
-    }
+def _load_instruments():
+    global _instruments_cache
+    if _instruments_cache is None:
+        kite = get_kite()
+        _instruments_cache = kite.instruments("NSE")
+    return _instruments_cache
 
 
-
-
-def get_token(symbol):
-    kite = get_kite()
-    instruments = kite.instruments("NSE")
-
+def get_token(symbol: str):
     symbol = symbol.upper().strip()
+    instruments = _load_instruments()
 
     for inst in instruments:
         if inst["tradingsymbol"] == symbol and inst["exchange"] == "NSE":
