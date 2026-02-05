@@ -28,6 +28,7 @@ def sma_cross_signal(df):
 def ema_cross_signal(df):
     df["ema_fast"] = df["close"].ewm(span=9, adjust=False).mean()
     df["ema_slow"] = df["close"].ewm(span=21, adjust=False).mean()
+    df["ema_trend"] = df["close"].ewm(span=50, adjust=False).mean()  # Trend filter
 
     # Previous candle
     prev_fast = df["ema_fast"].iloc[-2]
@@ -36,9 +37,14 @@ def ema_cross_signal(df):
     # Current candle
     curr_fast = df["ema_fast"].iloc[-1]
     curr_slow = df["ema_slow"].iloc[-1]
+    curr_price = df["close"].iloc[-1]
+    curr_trend = df["ema_trend"].iloc[-1]
 
-    # Bullish crossover
-    if prev_fast <= prev_slow and curr_fast > curr_slow:
+    # Conditions
+    bullish_cross = prev_fast <= prev_slow and curr_fast > curr_slow
+    trend_ok = curr_price > curr_trend  # Only buy in uptrend
+
+    if bullish_cross and trend_ok:
         return "BUY"
 
     return "HOLD"
