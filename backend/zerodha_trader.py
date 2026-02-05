@@ -1,6 +1,21 @@
 import pandas as pd
-from backend.zerodha_session import get_kite
+from kiteconnect import KiteConnect
+import os
+from backend.zerodha_session import get_access_token
 from backend.instruments import get_token
+
+
+def get_kite():
+    api_key = os.getenv("ZERODHA_API_KEY")
+    access_token = get_access_token()
+
+    if not access_token:
+        raise Exception("User not logged in to Zerodha")
+
+    kite = KiteConnect(api_key=api_key)
+    kite.set_access_token(access_token)
+    return kite
+
 
 def get_historical(symbol, interval="5minute", days=5):
     kite = get_kite()

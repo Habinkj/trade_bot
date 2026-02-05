@@ -1,21 +1,13 @@
-from kiteconnect import KiteConnect
 import os
 
-kite = None
+TOKEN_FILE = "access_token.txt"
 
-def create_session(request_token: str):
-    global kite
+def save_access_token(token):
+    with open(TOKEN_FILE, "w") as f:
+        f.write(token)
 
-    api_key = os.getenv("KITE_API_KEY")
-    api_secret = os.getenv("KITE_API_SECRET")
-
-    kite = KiteConnect(api_key=api_key)
-    data = kite.generate_session(request_token, api_secret=api_secret)
-    kite.set_access_token(data["access_token"])
-
-    print("✅ Zerodha session created")
-
-def get_kite():
-    if kite is None:
-        raise Exception("Kite session not initialized. Please login.")
-    return kite
+def get_access_token():
+    if not os.path.exists(TOKEN_FILE):
+        return None
+    with open(TOKEN_FILE, "r") as f:
+        return f.read().strip()
