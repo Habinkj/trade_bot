@@ -2,13 +2,16 @@ const API_BASE = "https://tradebot-iuqd.onrender.com";
 
 // -------- BALANCE --------
 async function loadBalance() {
+  const balanceEl = document.getElementById("balanceAmount");
+  balanceEl.innerText = "Loading...";
+
   try {
     const res = await fetch(`${API_BASE}/balance`);
     const data = await res.json();
-    document.getElementById("balanceAmount").innerText =
-    `₹${data.available_cash.toFixed(2)}`;
+    balanceEl.innerText = data.available_cash.toFixed(2);
   } catch (err) {
-    document.getElementById("balanceAmount").innerText = "Error";
+    balanceEl.innerText = "Error";
+    console.error(err);
   }
 }
 
