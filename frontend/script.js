@@ -75,50 +75,52 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // -------- PLACE ORDER --------
 async function placeOrder() {
-    const symbol = document.getElementById("symbol").value.trim();
-    const quantity = parseInt(document.getElementById("quantity").value);
-    const minPrice = parseFloat(document.getElementById("minPrice").value);
-    const maxPrice = parseFloat(document.getElementById("maxPrice").value);
-    const resultBox = document.getElementById("orderResult");
+  const symbol = document.getElementById("symbol").value.trim();
+  const quantity = parseInt(document.getElementById("quantity").value);
+  const minPrice = parseFloat(document.getElementById("minPrice").value);
+  const maxPrice = parseFloat(document.getElementById("maxPrice").value);
+  const resultBox = document.getElementById("orderResult");
 
-    if (!symbol || !quantity) {
-        resultBox.innerText = "Enter symbol and quantity";
-        return;
-    }
+  if (!symbol || !quantity) {
+    resultBox.innerText = "Enter symbol and quantity";
+    return;
+  }
 
-    if (
-        isNaN(minPrice) ||
-        isNaN(maxPrice) ||
-        minPrice <= 0 ||
-        maxPrice <= minPrice
-    ) {
-        resultBox.innerText = "Invalid price range";
-        return;
-    }
+  if (
+    isNaN(minPrice) ||
+    isNaN(maxPrice) ||
+    minPrice <= 0 ||
+    maxPrice <= minPrice
+  ) {
+    resultBox.innerText = "Invalid price range";
+    return;
+  }
 
-    const payload = {
+  resultBox.innerText = "Placing order...";
+
+  try {
+    const response = await fetch(`${API_BASE}/order`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         symbol,
         quantity,
         min_price: minPrice,
         max_price: maxPrice
-    };
+      })
+    });
 
-    resultBox.innerText = "Placing order...";
+    const data = await response.json();
 
-    try {
-        const response = await fetch(`${API_BASE}/order`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) throw new Error("Order failed");
-
-        const data = await response.json();
-        resultBox.innerText = data.status || "Order placed successfully";
-
-    } catch (error) {
-        resultBox.innerText = "Order failed";
-        console.error(error);
+    if (!response.ok) {
+      resultBox.innerText = data.reason || "Order failed";
+      return;
     }
+
+    resultBox.innerText = `✅ ${data.status}`;
+
+  } catch (error) {
+    resultBox.innerText = "❌ Order failed";
+    console.error(error);
+  }
 }
