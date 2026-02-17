@@ -110,3 +110,12 @@ button:hover {
   border: 1px solid #ccc;
   border-radius: 6px;
 }
+.warning {
+  font-size: 0.85rem;
+  color: #6b7280; /* soft grey */
+  margin-top: 12px;
+  line-height: 1.4;
+}
+.warning::before {
+  margin-right: 6px;
+}
