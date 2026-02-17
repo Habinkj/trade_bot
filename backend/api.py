@@ -97,10 +97,10 @@ def balance():
             "available_cash": margins["available"]["cash"]
         }
     except Exception as e:
-        return {
-            "available_cash": 0.0,
-            "error": str(e)
-        }
+    raise HTTPException(
+        status_code=401,
+        detail=f"Balance fetch failed: {str(e)}"
+    )
 
 
 # --------------------------------------------------
