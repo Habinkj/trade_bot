@@ -90,18 +90,14 @@ def scan(strategy: str):
 
 @router.get("/balance")
 def balance():
-    try:
-        kite = get_kite()
-        margins = kite.margins()["equity"]
-        return {
-            "available_cash": margins["available"]["cash"]
-        }
+    kite = get_kite()
+    margins = kite.margins()
 
-    except Exception as e:
-        raise HTTPException(
-            status_code=401,
-            detail=f"Balance fetch failed: {str(e)}"
-        )
+    return {
+        "equity_available": margins["equity"]["available"]["cash"],
+        "equity_net": margins["equity"]["net"],
+        "commodity_available": margins["commodity"]["available"]["cash"]
+    }
 
 
 # --------------------------------------------------
