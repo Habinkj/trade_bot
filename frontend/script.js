@@ -1,7 +1,9 @@
+const API_BASE = "https://tradebot-iuqd.onrender.com";
+
 // -------- BALANCE --------
 async function loadBalance() {
   try {
-    const res = await fetch("http://127.0.0.1:8000/balance");
+    const res = await fetch(`${API_BASE}/balance`);
     const data = await res.json();
     document.getElementById("balance").innerText =
       `₹${data.available_cash.toFixed(2)}`;
@@ -19,7 +21,7 @@ async function runScan() {
     resultBox.innerHTML = "Scanning market...";
 
     try {
-        const response = await fetch(`/scan?strategy=${strategy}`);
+        const response = await fetch(`${API_BASE}/scan?strategy=${strategy}`);
         const data = await response.json();
 
         resultBox.innerHTML = "";
@@ -101,7 +103,7 @@ async function placeOrder() {
     resultBox.innerText = "Placing order...";
 
     try {
-        const response = await fetch("/order", {
+        const response = await fetch(`${API_BASE}/order`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
