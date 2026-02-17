@@ -125,3 +125,6 @@ async function placeOrder() {
     console.error(error);
   }
 }
+window.loadBalance = loadBalance;
+window.runScan = runScan;
+window.placeOrder = placeOrder;
