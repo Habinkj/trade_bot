@@ -97,3 +97,16 @@ button:hover {
     margin-top: 12px;
     font-size: 14px;
 }
+
+.price-row {
+  display: flex;
+  gap: 12px;
+}
+
+.price-row input {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
