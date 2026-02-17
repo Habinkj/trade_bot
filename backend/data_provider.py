@@ -36,3 +36,6 @@ def get_historical(symbol):
     CACHE[symbol] = (df, now)
 
     return df
+
+def get_ltp(symbol):
+    return kite.ltp(f"NSE:{symbol}")[f"NSE:+ {symbol}"]["last_price"]

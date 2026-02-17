@@ -46,6 +46,12 @@ async function placeOrder() {
     const symbol = document.getElementById("symbol").value;
     const quantity = document.getElementById("quantity").value;
     const resultBox = document.getElementById("orderResult");
+    const payload = {
+  symbol: document.getElementById("symbol").value,
+  quantity: document.getElementById("quantity").value,
+  min_price: document.getElementById("minPrice").value,
+  max_price: document.getElementById("maxPrice").value
+};
 
     if (!symbol || !quantity) {
         resultBox.innerText = "Enter symbol and quantity";

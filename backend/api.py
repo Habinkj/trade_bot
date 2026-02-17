@@ -79,3 +79,23 @@ def scan(strategy: str):
 @router.get("/balance")
 def balance():
     return get_balance()
+
+@router.post("/place-order")
+def place_order(payload: dict):
+    symbol = payload["symbol"]
+    quantity = payload["quantity"]
+    min_price = payload["min_price"]
+    max_price = payload["max_price"]
+
+    # ✅ ADD HERE
+    current_price = get_ltp(symbol)
+
+    if current_price < min_price or current_price > max_price:
+        return {
+            "status": "REJECTED",
+            "reason": "Price out of allowed range",
+            "current_price": current_price
+        }
+
+    # ✅ Only if price is valid
+    return place_trade(symbol, quantity)
