@@ -125,6 +125,7 @@ async function placeOrder() {
     console.error(error);
   }
 }
+// expose functions to HTML
 window.loadBalance = loadBalance;
 window.runScan = runScan;
 window.placeOrder = placeOrder;
