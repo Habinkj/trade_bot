@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from kiteconnect import KiteConnect
+from backend.zerodha_session import get_kite
 import os
 
 from backend.zerodha_session import get_kite, get_login_url, save_access_token
@@ -78,16 +79,25 @@ def scan(strategy: str):
 
 @router.get("/balance")
 def balance():
-    return get_balance()
+    try:
+        kite = get_kite()
+        margins = kite.margins()["equity"]
+        return {
+            "available_cash": margins["available"]["cash"]
+        }
+    except Exception as e:
+        return {
+            "available_cash": 0.0,
+            "error": str(e)
+        }
 
-@router.post("/place-order")
+@router.post("/order")
 def place_order(payload: dict):
     symbol = payload["symbol"]
     quantity = payload["quantity"]
     min_price = payload["min_price"]
     max_price = payload["max_price"]
 
-    # ✅ ADD HERE
     current_price = get_ltp(symbol)
 
     if current_price < min_price or current_price > max_price:
@@ -97,5 +107,26 @@ def place_order(payload: dict):
             "current_price": current_price
         }
 
-    # ✅ Only if price is valid
     return place_trade(symbol, quantity)
+
+def get_ltp(symbol: str):
+    kite = get_kite()
+    ltp_data = kite.ltp([f"NSE:{symbol}"])
+    return ltp_data[f"NSE:{symbol}"]["last_price"]
+def place_trade(symbol: str, quantity: int):
+    kite = get_kite()
+
+    order_id = kite.place_order(
+        variety=kite.VARIETY_REGULAR,
+        exchange=kite.EXCHANGE_NSE,
+        tradingsymbol=symbol,
+        transaction_type=kite.TRANSACTION_TYPE_BUY,
+        quantity=quantity,
+        order_type=kite.ORDER_TYPE_MARKET,
+        product=kite.PRODUCT_CNC
+    )
+
+    return {
+        "status": "ORDER_PLACED",
+        "order_id": order_id
+    }
