@@ -3,7 +3,6 @@ async function loadBalance() {
   try {
     const res = await fetch("http://127.0.0.1:8000/balance");
     const data = await res.json();
-
     document.getElementById("balance").innerText =
       `₹${data.available_cash.toFixed(2)}`;
   } catch (err) {
@@ -41,6 +40,33 @@ async function runScan() {
 }
 
 
+// -------- DOM READY --------
+document.addEventListener("DOMContentLoaded", () => {
+
+    const minPriceInput = document.getElementById("minPrice");
+    const maxPriceInput = document.getElementById("maxPrice");
+    const placeOrderBtn = document.getElementById("placeOrderBtn");
+
+    function validatePrices() {
+        const minPrice = parseFloat(minPriceInput.value);
+        const maxPrice = parseFloat(maxPriceInput.value);
+
+        if (
+            !isNaN(minPrice) &&
+            !isNaN(maxPrice) &&
+            minPrice > 0 &&
+            maxPrice > minPrice
+        ) {
+            placeOrderBtn.disabled = false;
+        } else {
+            placeOrderBtn.disabled = true;
+        }
+    }
+
+    minPriceInput.addEventListener("input", validatePrices);
+    maxPriceInput.addEventListener("input", validatePrices);
+});
+
 
 // -------- PLACE ORDER --------
 async function placeOrder() {
@@ -50,7 +76,6 @@ async function placeOrder() {
     const maxPrice = parseFloat(document.getElementById("maxPrice").value);
     const resultBox = document.getElementById("orderResult");
 
-    // 🔒 Frontend validation
     if (!symbol || !quantity) {
         resultBox.innerText = "Enter symbol and quantity";
         return;
@@ -60,16 +85,15 @@ async function placeOrder() {
         isNaN(minPrice) ||
         isNaN(maxPrice) ||
         minPrice <= 0 ||
-        maxPrice <= 0 ||
-        minPrice >= maxPrice
+        maxPrice <= minPrice
     ) {
         resultBox.innerText = "Invalid price range";
         return;
     }
 
     const payload = {
-        symbol: symbol,
-        quantity: quantity,
+        symbol,
+        quantity,
         min_price: minPrice,
         max_price: maxPrice
     };
@@ -79,10 +103,8 @@ async function placeOrder() {
     try {
         const response = await fetch("/order", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)   // ✅ FIXED
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) throw new Error("Order failed");
@@ -92,29 +114,6 @@ async function placeOrder() {
 
     } catch (error) {
         resultBox.innerText = "Order failed";
-        console.error("Order error:", error);
+        console.error(error);
     }
 }
-
-const minPriceInput = document.getElementById("minPrice");
-const maxPriceInput = document.getElementById("maxPrice");
-const placeOrderBtn = document.getElementById("placeOrderBtn");
-
-function validatePrices() {
-    const minPrice = parseFloat(minPriceInput.value);
-    const maxPrice = parseFloat(maxPriceInput.value);
-
-    if (
-        !isNaN(minPrice) &&
-        !isNaN(maxPrice) &&
-        minPrice > 0 &&
-        maxPrice > minPrice
-    ) {
-        placeOrderBtn.disabled = false;
-    } else {
-        placeOrderBtn.disabled = true;
-    }
-}
-
-minPriceInput.addEventListener("input", validatePrices);
-maxPriceInput.addEventListener("input", validatePrices);
