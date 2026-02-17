@@ -101,18 +101,20 @@ const maxPriceInput = document.getElementById("maxPrice");
 const placeOrderBtn = document.getElementById("placeOrderBtn");
 
 function validatePrices() {
-    const min = parseFloat(minPriceInput.value);
-    const max = parseFloat(maxPriceInput.value);
+    const minPrice = parseFloat(minPriceInput.value);
+    const maxPrice = parseFloat(maxPriceInput.value);
 
-    const valid =
-        !isNaN(min) &&
-        !isNaN(max) &&
-        min > 0 &&
-        max > min;
-
-    placeOrderBtn.disabled = !valid;
+    if (
+        !isNaN(minPrice) &&
+        !isNaN(maxPrice) &&
+        minPrice > 0 &&
+        maxPrice > minPrice
+    ) {
+        placeOrderBtn.disabled = false;
+    } else {
+        placeOrderBtn.disabled = true;
+    }
 }
 
-// Run validation when user types
 minPriceInput.addEventListener("input", validatePrices);
 maxPriceInput.addEventListener("input", validatePrices);
