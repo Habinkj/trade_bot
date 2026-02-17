@@ -1,3 +1,4 @@
+console.log("script.js loaded");
 const API_BASE = "https://tradebot-iuqd.onrender.com";
 
 // -------- BALANCE --------
