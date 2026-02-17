@@ -41,22 +41,38 @@ async function runScan() {
 }
 
 
+
 // -------- PLACE ORDER --------
 async function placeOrder() {
-    const symbol = document.getElementById("symbol").value;
-    const quantity = document.getElementById("quantity").value;
+    const symbol = document.getElementById("symbol").value.trim();
+    const quantity = parseInt(document.getElementById("quantity").value);
+    const minPrice = parseFloat(document.getElementById("minPrice").value);
+    const maxPrice = parseFloat(document.getElementById("maxPrice").value);
     const resultBox = document.getElementById("orderResult");
-    const payload = {
-  symbol: document.getElementById("symbol").value,
-  quantity: document.getElementById("quantity").value,
-  min_price: document.getElementById("minPrice").value,
-  max_price: document.getElementById("maxPrice").value
-};
 
+    // 🔒 Frontend validation
     if (!symbol || !quantity) {
         resultBox.innerText = "Enter symbol and quantity";
         return;
     }
+
+    if (
+        isNaN(minPrice) ||
+        isNaN(maxPrice) ||
+        minPrice <= 0 ||
+        maxPrice <= 0 ||
+        minPrice >= maxPrice
+    ) {
+        resultBox.innerText = "Invalid price range";
+        return;
+    }
+
+    const payload = {
+        symbol: symbol,
+        quantity: quantity,
+        min_price: minPrice,
+        max_price: maxPrice
+    };
 
     resultBox.innerText = "Placing order...";
 
@@ -66,7 +82,7 @@ async function placeOrder() {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ symbol, quantity })
+            body: JSON.stringify(payload)   // ✅ FIXED
         });
 
         if (!response.ok) throw new Error("Order failed");
@@ -79,3 +95,24 @@ async function placeOrder() {
         console.error("Order error:", error);
     }
 }
+
+const minPriceInput = document.getElementById("minPrice");
+const maxPriceInput = document.getElementById("maxPrice");
+const placeOrderBtn = document.getElementById("placeOrderBtn");
+
+function validatePrices() {
+    const min = parseFloat(minPriceInput.value);
+    const max = parseFloat(maxPriceInput.value);
+
+    const valid =
+        !isNaN(min) &&
+        !isNaN(max) &&
+        min > 0 &&
+        max > min;
+
+    placeOrderBtn.disabled = !valid;
+}
+
+// Run validation when user types
+minPriceInput.addEventListener("input", validatePrices);
+maxPriceInput.addEventListener("input", validatePrices);

@@ -58,10 +58,16 @@
     placeholder="Max Buy Price (₹)"
   />
 </div>
-<p>Investment in securities market are subject to market risks. Read all the related documents carefully before investing</p>
+<p class="warning">&#9888;Investment in securities market are subject to market risks. Read all the related documents carefully before investing</p>
 
-            <button onclick="placeOrder()">Place Order</button>
-            <p id="orderResult" class="order-result"></p>
+           <button 
+  id="placeOrderBtn"
+  onclick="placeOrder()"
+  disabled
+>
+  Place Order
+</button>
+            
         </div>
 
     </main>
