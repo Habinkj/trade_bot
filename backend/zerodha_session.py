@@ -7,6 +7,15 @@ API_SECRET = os.getenv("KITE_API_SECRET")
 TOKEN_FILE = "access_token.txt"
 
 
+
+def get_balance():
+    margins = kite.margins()
+    return {
+        "available_cash": margins["equity"]["available"]["cash"],
+        "used_margin": margins["equity"]["utilised"]["debits"],
+        "net": margins["equity"]["net"]
+    }
+
 def get_login_url():
     kite = KiteConnect(api_key=API_KEY)
     return kite.login_url()

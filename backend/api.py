@@ -76,3 +76,6 @@ def scan(strategy: str):
 
     return results
 
+@router.get("/balance")
+def balance():
+    return get_balance()

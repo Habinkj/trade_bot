@@ -1,17 +1,14 @@
 // -------- BALANCE --------
-async function refreshBalance() {
-    const balanceEl = document.getElementById("balanceAmount");
-    balanceEl.innerText = "Loading...";
+async function loadBalance() {
+  try {
+    const res = await fetch("http://127.0.0.1:8000/balance");
+    const data = await res.json();
 
-    try {
-        const res = await fetch("/balance");
-        if (!res.ok) throw new Error();
-
-        const data = await res.json();
-        balanceEl.innerText = "₹" + data.balance;
-    } catch {
-        balanceEl.innerText = "₹0";
-    }
+    document.getElementById("balance").innerText =
+      `₹${data.available_cash.toFixed(2)}`;
+  } catch (err) {
+    document.getElementById("balance").innerText = "Error";
+  }
 }
 
 

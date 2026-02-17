@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse
 from backend.api import router
 
 app = FastAPI()
+app.include_router(router)
 
 # Include API routes
 app.include_router(router)
