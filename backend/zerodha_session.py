@@ -9,6 +9,7 @@ TOKEN_FILE = "access_token.txt"
 
 
 def get_balance():
+    kite = get_kite()
     margins = kite.margins()
     return {
         "available_cash": margins["equity"]["available"]["cash"],
