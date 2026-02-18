@@ -9,7 +9,7 @@ async function loadBalance() {
   try {
     const res = await fetch(`${API_BASE}/balance`);
     const data = await res.json();
-    balanceEl.innerText = `₹${data.available_cash.toFixed(2)}`;
+    balanceEl.innerText = `₹${data.equity_available.toFixed(2)}`;
   } catch (err) {
     balanceEl.innerText = "Error";
     console.error(err);
