@@ -5,7 +5,8 @@ let CURRENT_BALANCE = 0;
 // -------- BALANCE --------
 async function loadBalance() {
   const balanceEl = document.getElementById("balanceAmount");
-  balanceEl.innerText = "Loading...";
+  CURRENT_BALANCE = data.available_cash;
+  balanceEl.innerText = `₹${CURRENT_BALANCE.toFixed(2)}`;
 
   try {
     const res = await fetch(`${API_BASE}/balance`);
