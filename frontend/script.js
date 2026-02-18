@@ -105,16 +105,27 @@ async function placeOrder() {
   resultBox.innerText = "Placing order...";
 
   try {
-    const response = await fetch(`${API_BASE}/place-order`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        symbol,
-        quantity,
-        min_price: minPrice,
-        max_price: maxPrice
-      })
-    });
+
+   const requiredAmount = quantity * maxPrice;
+
+if (requiredAmount > CURRENT_BALANCE) {
+  resultBox.innerText =
+    `❌ Insufficient balance. Need ₹${requiredAmount.toFixed(2)}, have ₹${CURRENT_BALANCE.toFixed(2)}`;
+  return;
+}
+
+resultBox.innerText = "Placing order...";
+
+const response = await fetch(`${API_BASE}/order`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    symbol,
+    quantity,
+    min_price: minPrice,
+    max_price: maxPrice
+  })
+});
 
     const data = await response.json();
 
