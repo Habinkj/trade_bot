@@ -1,5 +1,6 @@
 console.log("script.js loaded");
 const API_BASE = "https://tradebot-iuqd.onrender.com";
+let CURRENT_BALANCE = 0;
 
 // -------- BALANCE --------
 async function loadBalance() {
