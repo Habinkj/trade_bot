@@ -11,12 +11,13 @@ async function loadBalance() {
     const res = await fetch(`${API_BASE}/balance`);
     const data = await res.json();
 
+    // backend returns: { "available_cash": 50 }
     CURRENT_BALANCE = data.available_cash;
-    balanceEl.innerText = `₹${CURRENT_BALANCE.toFixed(2)}`;
 
+    balanceEl.innerText = `₹${CURRENT_BALANCE.toFixed(2)}`;
   } catch (err) {
     balanceEl.innerText = "Error";
-    console.error(err);
+    console.error("Balance fetch failed:", err);
   }
 }
 
