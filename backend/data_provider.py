@@ -21,13 +21,13 @@ def get_historical(symbol):
     instrument_token = get_token(symbol)
 
     to_date = datetime.now()
-    from_date = to_date - timedelta(days=20)
+    from_date = to_date - timedelta(days=7)
 
     data = kite.historical_data(
         instrument_token,
         from_date,
         to_date,
-        "day"
+        "5minute"
     )
 
     df = pd.DataFrame(data)
@@ -38,4 +38,6 @@ def get_historical(symbol):
     return df
 
 def get_ltp(symbol):
-    return kite.ltp(f"NSE:{symbol}")[f"NSE:+ {symbol}"]["last_price"]
+    kite = get_kite()
+    ltp_data = kite.ltp([f"NSE:{symbol}"])
+    return ltp_data[f"NSE:{symbol}"]["last_price"]
