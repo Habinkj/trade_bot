@@ -18,7 +18,7 @@ from backend.strategy import (
 from backend.config_loader import load_watchlist
 
 API_KEY = os.getenv("KITE_API_KEY")
-KITE_API_SECRET = os.getenv("KITE_API_SECRET")
+API_SECRET = os.getenv("KITE_API_SECRET")
 
 router = APIRouter()
 
