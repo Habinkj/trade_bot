@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from fastapi import Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from kiteconnect import KiteConnect
 import os
@@ -33,10 +34,19 @@ def login():
 
 
 @router.get("/callback")
-def callback(request_token: str):
+def callback(request: Request):
+
+    request_token = request.query_params.get("request_token")
+
     kite = KiteConnect(api_key=API_KEY)
-    data = kite.generate_session(request_token, api_secret=API_SECRET)
+
+    data = kite.generate_session(
+        request_token,
+        api_secret=API_SECRET
+    )
+
     save_access_token(data["access_token"])
+
     return {"status": "Login successful. You can close this tab."}
 
 
