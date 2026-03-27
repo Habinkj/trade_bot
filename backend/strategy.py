@@ -15,10 +15,15 @@ def sma_5_10_signal(df):
     curr_slow = df["sma_10"].iloc[-1]
 
     bullish_cross = prev_fast <= prev_slow and curr_fast > curr_slow
+    bearish_cross = prev_fast >= prev_slow and curr_fast < curr_slow
+
     strong_trend = latest_adx > 25
 
     if bullish_cross and strong_trend:
         return "BUY"
+
+    if bearish_cross and strong_trend:
+        return "SELL"
 
     return "HOLD"
 
@@ -36,10 +41,15 @@ def sma_9_21_signal(df):
     curr_slow = df["sma_21"].iloc[-1]
 
     bullish_cross = prev_fast <= prev_slow and curr_fast > curr_slow
+    bearish_cross = prev_fast >= prev_slow and curr_fast < curr_slow
+
     strong_trend = latest_adx > 25
 
     if bullish_cross and strong_trend:
         return "BUY"
+
+    if bearish_cross and strong_trend:
+        return "SELL"
 
     return "HOLD"
 
@@ -58,10 +68,15 @@ def sma_15_20_signal(df):
     curr_slow = df["sma_20"].iloc[-1]
 
     bullish_cross = prev_fast <= prev_slow and curr_fast > curr_slow
+    bearish_cross = prev_fast >= prev_slow and curr_fast < curr_slow
+
     strong_trend = latest_adx > 25
 
     if bullish_cross and strong_trend:
         return "BUY"
+
+    if bearish_cross and strong_trend:
+        return "SELL"
 
     return "HOLD"
 
