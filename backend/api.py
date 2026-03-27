@@ -1,9 +1,9 @@
-from fastapi import APIRouter
-from fastapi import Request
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from kiteconnect import KiteConnect
 import os
 
+from backend.indicators import calculate_adx
 from backend.zerodha_session import (
     get_kite,
     get_login_url,
@@ -11,9 +11,7 @@ from backend.zerodha_session import (
 )
 from backend.data_provider import get_historical
 from backend.strategy import (
-    sma_5_10_signal,
-    sma_9_21_signal,
-    sma_15_20_signal,
+    sma_dynamic_signal,
     ema_cross_signal,
     supertrend_signal
 )
@@ -36,7 +34,6 @@ def login():
 
 @router.get("/callback")
 def callback(request: Request):
-
     request_token = request.query_params.get("request_token")
 
     kite = KiteConnect(api_key=API_KEY)
@@ -56,7 +53,7 @@ def callback(request: Request):
 # --------------------------------------------------
 
 @router.get("/scan")
-def scan(strategy: str):
+def scan(strategy: str, request: Request):
     try:
         get_kite()
     except Exception:
@@ -72,24 +69,39 @@ def scan(strategy: str):
         try:
             df = get_historical(symbol)
 
-            if strategy == "sma_5_10":
-                signal = sma_5_10_signal(df)
-            elif strategy == "sma_9_21":
-                signal = sma_9_21_signal(df)
-            elif strategy == "sma_15_20":
-                signal = sma_15_20_signal(df)
-            elif strategy == "ema_cross":
+            # 🔥 ADX FOR ALL STRATEGIES
+            adx = calculate_adx(df)
+            adx_value = adx.iloc[-1]
+            strength = "STRONG" if adx_value > 25 else "WEAK"
+
+            # 🔥 STRATEGY SELECTION
+            if strategy == "sma":
+                fast = int(request.query_params.get("fast", 5))
+                slow = int(request.query_params.get("slow", 10))
+
+                # safety check
+                if fast <= 0 or slow <= 0 or fast >= slow:
+                    continue
+
+                signal = sma_dynamic_signal(df, fast, slow)
+
+            elif strategy == "ema":
                 signal = ema_cross_signal(df)
+
             elif strategy == "supertrend":
                 signal = supertrend_signal(df)
+
             else:
                 continue
 
-            if signal == "BUY":
+            # 🔥 ONLY RETURN VALID SIGNALS
+            if signal != "HOLD":
                 results.append({
                     "symbol": symbol,
                     "price": round(df["close"].iloc[-1], 2),
-                    "signal": signal
+                    "signal": signal,
+                    "adx": round(adx_value, 2),
+                    "strength": strength
                 })
 
         except Exception as e:
@@ -126,7 +138,7 @@ def place_order(payload: dict):
 
     current_price = get_ltp(symbol)
 
-    # ✅ PRICE SAFETY CHECK
+    # PRICE SAFETY CHECK
     if current_price < min_price or current_price > max_price:
         return {
             "status": "REJECTED",

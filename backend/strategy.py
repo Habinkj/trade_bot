@@ -2,6 +2,30 @@ import pandas as pd
 from backend.indicators import calculate_adx
 from backend.indicators import calculate_supertrend
 
+def sma_dynamic_signal(df, fast: int, slow: int):
+    # create moving averages
+    df["fast_sma"] = df["close"].rolling(fast).mean()
+    df["slow_sma"] = df["close"].rolling(slow).mean()
+
+    # previous values
+    prev_fast = df["fast_sma"].iloc[-2]
+    prev_slow = df["slow_sma"].iloc[-2]
+
+    # current values
+    curr_fast = df["fast_sma"].iloc[-1]
+    curr_slow = df["slow_sma"].iloc[-1]
+
+    # crossover logic
+    bullish_cross = prev_fast <= prev_slow and curr_fast > curr_slow
+    bearish_cross = prev_fast >= prev_slow and curr_fast < curr_slow
+
+    if bullish_cross:
+        return "BUY"
+    elif bearish_cross:
+        return "SELL"
+    else:
+        return "HOLD"
+
 # -------- SMA (5,10) --------
 def sma_5_10_signal(df):
     df["sma_5"] = df["close"].rolling(5).mean()
