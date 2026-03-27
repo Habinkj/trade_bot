@@ -25,23 +25,38 @@ async function loadBalance() {
 // -------- MARKET SCAN --------
 async function runScan() {
     const strategy = document.getElementById("strategy").value;
+    const fast = document.getElementById("fast").value;
+    const slow = document.getElementById("slow").value;
     const resultBox = document.getElementById("scanResults");
 
     resultBox.innerHTML = "Scanning market...";
 
     try {
-        const response = await fetch(`${API_BASE}/scan?strategy=${strategy}`);
-        const data = await response.json();
+        const res = await fetch(
+            `${API_BASE}/scan?strategy=${strategy}&fast=${fast}&slow=${slow}`
+        );
+
+        const data = await res.json();
 
         resultBox.innerHTML = "";
 
         if (data.length === 0) {
-            resultBox.innerHTML = "<li>No BUY signals found</li>";
+            resultBox.innerHTML = "<li>No signals found</li>";
             return;
         }
 
         data.forEach(stock => {
-            resultBox.innerHTML += `<li>${stock.symbol} - ₹${stock.price} - ${stock.signal}</li>`;
+            const li = document.createElement("li");
+
+            li.innerText = `${stock.symbol} - ₹${stock.price} - ${stock.signal}`;
+
+            if (stock.signal === "BUY") {
+                li.style.color = "green";
+            } else if (stock.signal === "SELL") {
+                li.style.color = "red";
+            }
+
+            resultBox.appendChild(li);
         });
 
     } catch (error) {

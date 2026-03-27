@@ -14,7 +14,8 @@ from backend.strategy import (
     sma_5_10_signal,
     sma_9_21_signal,
     sma_15_20_signal,
-    ema_cross_signal
+    ema_cross_signal,
+    supertrend_signal
 )
 from backend.config_loader import load_watchlist
 
@@ -79,6 +80,8 @@ def scan(strategy: str):
                 signal = sma_15_20_signal(df)
             elif strategy == "ema_cross":
                 signal = ema_cross_signal(df)
+            elif strategy == "supertrend":
+                signal = supertrend_signal(df)
             else:
                 continue
 

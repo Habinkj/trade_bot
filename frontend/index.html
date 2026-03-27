@@ -25,12 +25,20 @@
         <div class="card">
     <h2>Market Scan</h2>
 
-   <select id="strategy">
-    <option value="sma_5_10">SMA Crossover (5,10)</option>
-    <option value="sma_9_21">SMA Crossover (9,21)</option>
-    <option value="sma_15_20">SMA Crossover (15,20)</option>
-    <option value="ema_cross">EMA Crossover (9,21)</option>
-</select>
+  <div class="strategy-row">
+
+    <select id="strategy">
+        <option value="sma_5_10">SMA (5,10)</option>
+        <option value="sma_9_21">SMA (9,21)</option>
+        <option value="sma_15_20">SMA (15,20)</option>
+        <option value="ema_cross">EMA (9,21)</option>
+        <option value="supertrend">Supertrend</option>
+    </select>
+
+    <input type="number" id="fast" placeholder="Fast" value="0">
+    <input type="number" id="slow" placeholder="Slow" value="0">
+
+</div>
 
     <button onclick="runScan()">Run Scan</button>
 

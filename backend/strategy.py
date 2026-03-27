@@ -1,5 +1,6 @@
 import pandas as pd
 from backend.indicators import calculate_adx
+from backend.indicators import calculate_supertrend
 
 # -------- SMA (5,10) --------
 def sma_5_10_signal(df):
@@ -106,3 +107,14 @@ def ema_cross_signal(df):
         return "BUY"
 
     return "HOLD"
+
+# -------- SUPER TREND ----------
+def supertrend_signal(df):
+    st = calculate_supertrend(df)
+
+    price = df["close"].iloc[-1]
+
+    if price > st.iloc[-1]:
+        return "BUY"
+    else:
+        return "SELL"

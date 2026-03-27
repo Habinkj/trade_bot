@@ -88,3 +88,15 @@ def ema_fast_signal(df):
         return "SELL"
     else:
         return "HOLD"
+    
+def calculate_supertrend(df, period=10, multiplier=3):
+    hl2 = (df["high"] + df["low"]) / 2
+
+    tr = df["high"] - df["low"]
+    atr = tr.rolling(period).mean()
+
+    upperband = hl2 + multiplier * atr
+    lowerband = hl2 - multiplier * atr
+
+    # simplified version (safe for demo)
+    return lowerband
