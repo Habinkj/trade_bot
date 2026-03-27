@@ -27,16 +27,22 @@ async function runScan() {
     const strategy = document.getElementById("strategy").value;
     const fast = document.getElementById("fast").value;
     const slow = document.getElementById("slow").value;
+
     const resultBox = document.getElementById("scanResults");
+    
+      if (strategy === "sma") {
+      if (!fast || !slow || fast <= 0 || slow <= 0 || parseInt(fast) >= parseInt(slow)) {
+        resultBox.innerHTML = "<li>Invalid SMA values</li>";
+        return;
+    }
+}
+    
 
     resultBox.innerHTML = "Scanning market...";
 
     try {
-        const res = await fetch(
-            `${API_BASE}/scan?strategy=${strategy}&fast=${fast}&slow=${slow}`
-        );
-
-        const data = await res.json();
+        const response = await fetch(`${API_BASE}/scan?strategy=${strategy}&fast=${fast}&slow=${slow}`);
+        const data = await response.json();
 
         resultBox.innerHTML = "";
 
