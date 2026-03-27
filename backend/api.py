@@ -95,7 +95,7 @@ def scan(strategy: str, request: Request):
                 continue
 
             # 🔥 ONLY RETURN VALID SIGNALS
-            if signal != "HOLD":
+            if signal == "BUY":
                 results.append({
                     "symbol": symbol,
                     "price": round(df["close"].iloc[-1], 2),
