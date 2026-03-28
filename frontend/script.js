@@ -1,251 +1,217 @@
-console.log("script.js loaded");
 const API_BASE = "https://trade-bot-hvfi.onrender.com";
+
 let CURRENT_BALANCE = 0;
 
-// -------- BALANCE --------
+// ==========================
+// BALANCE
+// ==========================
 async function loadBalance() {
-  const balanceEl = document.getElementById("balanceAmount");
-  balanceEl.innerText = "Loading...";
+    const el = document.getElementById("balanceAmount");
+    el.innerText = "Loading...";
 
-  try {
-    const res = await fetch(`${API_BASE}/balance`);
-    const data = await res.json();
+    try {
+        const res = await fetch(`${API_BASE}/balance`);
+        const data = await res.json();
 
-    CURRENT_BALANCE = data.available_cash;
-    balanceEl.innerText = `₹${CURRENT_BALANCE.toFixed(2)}`;
-  } catch (err) {
-    balanceEl.innerText = "Error";
-    console.error("Balance fetch failed:", err);
-  }
+        CURRENT_BALANCE = data.available_cash || 0;
+        el.innerText = CURRENT_BALANCE.toFixed(2);
+
+    } catch (err) {
+        el.innerText = "Error";
+        console.error("Balance error:", err);
+    }
 }
 
 
-// -------- MARKET SCAN --------
+// ==========================
+// MARKET SCAN (TABLE)
+// ==========================
 async function runScan() {
     const strategy = document.getElementById("strategy").value;
     const fast = document.getElementById("fast").value;
     const slow = document.getElementById("slow").value;
 
-    const resultBox = document.getElementById("scanResults");
-
-    // SMA validation
-    if (strategy === "sma") {
-        if (!fast || !slow || fast <= 0 || slow <= 0 || parseInt(fast) >= parseInt(slow)) {
-            resultBox.innerHTML = "<li>Invalid SMA values</li>";
-            return;
-        }
-    }
-
-    resultBox.innerHTML = "Scanning market...";
+    const tbody = document.querySelector("#scanTable tbody");
+    tbody.innerHTML = "<tr><td colspan='4'>Scanning...</td></tr>";
 
     try {
-        const response = await fetch(`${API_BASE}/scan?strategy=${strategy}&fast=${fast}&slow=${slow}`);
-        const data = await response.json();
+        const res = await fetch(
+            `${API_BASE}/scan?strategy=${strategy}&fast=${fast}&slow=${slow}`
+        );
+        const data = await res.json();
 
-        resultBox.innerHTML = "";
+        tbody.innerHTML = "";
 
-        if (data.length === 0) {
-            resultBox.innerHTML = "<li>No signals found</li>";
+        if (!data || data.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='4'>No signals found</td></tr>";
             return;
         }
 
         data.forEach(stock => {
-            const li = document.createElement("li");
+            const row = document.createElement("tr");
 
-            // display
-            li.innerText = `${stock.symbol} | ₹${stock.price} | ${stock.signal} | ADX: ${stock.adx} (${stock.strength})`;
+            row.innerHTML = `
+                <td>${stock.symbol}</td>
+                <td>₹${stock.price}</td>
+                <td>${stock.signal}</td>
+                <td>${stock.adx}</td>
+            `;
 
-            // color
-            if (stock.signal === "BUY") {
-                li.style.color = "green";
-            } else if (stock.signal === "SELL") {
-                li.style.color = "red";
-            }
-
-            // 🔥 CLICK → AUTO-FILL ORDER
-            li.style.cursor = "pointer";
-
-            li.onclick = () => {
+            // 🔥 CLICK → AUTO-FILL
+            row.onclick = () => {
                 document.getElementById("symbol").value = stock.symbol;
 
-                const price = stock.price;
-                const min = (price * 0.99).toFixed(2);
-                const max = (price * 1.01).toFixed(2);
+                const min = stock.price * 0.98;
+                const max = stock.price * 1.02;
 
-                document.getElementById("minPrice").value = min;
-                document.getElementById("maxPrice").value = max;
+                document.getElementById("minPrice").value = min.toFixed(2);
+                document.getElementById("maxPrice").value = max.toFixed(2);
+
+                // 🔥 AUTO QUANTITY (10% capital)
+                const qty = Math.floor((CURRENT_BALANCE * 0.1) / stock.price);
+                document.getElementById("quantity").value = qty > 0 ? qty : 1;
             };
 
-            // hover effect
-            li.onmouseover = () => {
-                li.style.background = "#eef2ff";
-            };
-
-            li.onmouseout = () => {
-                li.style.background = "transparent";
-            };
-
-            resultBox.appendChild(li);
+            tbody.appendChild(row);
         });
 
-    } catch (error) {
-        resultBox.innerHTML = "<li>Error connecting to server</li>";
-        console.error(error);
+    } catch (err) {
+        tbody.innerHTML = "<tr><td colspan='4'>Error loading data</td></tr>";
+        console.error("Scan error:", err);
     }
 }
 
 
-// -------- DOM READY --------
-document.addEventListener("DOMContentLoaded", () => {
-
-    loadBalance();   // load balance instantly
-    loadTrades();    // load trades instantly
-
-    const minPriceInput = document.getElementById("minPrice");
-    const maxPriceInput = document.getElementById("maxPrice");
-    const placeOrderBtn = document.getElementById("placeOrderBtn");
-
-    function validatePrices() {
-        const minPrice = parseFloat(minPriceInput.value);
-        const maxPrice = parseFloat(maxPriceInput.value);
-
-        if (
-            !isNaN(minPrice) &&
-            !isNaN(maxPrice) &&
-            minPrice > 0 &&
-            maxPrice > minPrice
-        ) {
-            placeOrderBtn.disabled = false;
-        } else {
-            placeOrderBtn.disabled = true;
-        }
-    }
-
-    minPriceInput.addEventListener("input", validatePrices);
-    maxPriceInput.addEventListener("input", validatePrices);
-});
-
-
-// -------- PLACE ORDER --------
-async function placeOrder() {
-  const symbol = document.getElementById("symbol").value.trim();
-  const quantity = parseInt(document.getElementById("quantity").value);
-  const minPrice = parseFloat(document.getElementById("minPrice").value);
-  const maxPrice = parseFloat(document.getElementById("maxPrice").value);
-  const resultBox = document.getElementById("orderResult");
-
-  if (!symbol || !quantity) {
-    resultBox.innerText = "Enter symbol and quantity";
-    return;
-  }
-
-  if (
-    isNaN(minPrice) ||
-    isNaN(maxPrice) ||
-    minPrice <= 0 ||
-    maxPrice <= minPrice
-  ) {
-    resultBox.innerText = "Invalid price range";
-    return;
-  }
-
-  resultBox.innerText = "Placing order...";
-
-  try {
-    const requiredAmount = quantity * maxPrice;
-
-    if (requiredAmount > CURRENT_BALANCE) {
-      resultBox.innerText =
-        `❌ Insufficient balance. Need ₹${requiredAmount.toFixed(2)}, have ₹${CURRENT_BALANCE.toFixed(2)}`;
-      return;
-    }
-
-    const response = await fetch(`${API_BASE}/order`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        symbol,
-        quantity,
-        min_price: minPrice,
-        max_price: maxPrice
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      resultBox.innerText = data.reason || "Order failed";
-      return;
-    }
-
-    resultBox.innerText = `✅ ${data.status}`;
-
-    // refresh trades after buy
-    loadTrades();
-
-  } catch (error) {
-    resultBox.innerText = "❌ Order failed";
-    console.error(error);
-  }
-}
-
-
-// -------- ACTIVE TRADES --------
+// ==========================
+// ACTIVE TRADES (TABLE)
+// ==========================
 async function loadTrades() {
-    const list = document.getElementById("tradeList");
-    list.innerHTML = "Loading...";
+    const tbody = document.querySelector("#tradeTable tbody");
+    tbody.innerHTML = "<tr><td colspan='5'>Loading...</td></tr>";
 
     try {
         const res = await fetch(`${API_BASE}/trades`);
         const data = await res.json();
 
-        list.innerHTML = "";
+        tbody.innerHTML = "";
 
-        if (data.length === 0) {
-            list.innerHTML = "<li>No active trades</li>";
+        if (!data || data.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='5'>No active trades</td></tr>";
             return;
         }
 
         data.forEach(trade => {
-            const li = document.createElement("li");
+            const row = document.createElement("tr");
 
-            li.innerText = `${trade.symbol} | Entry: ₹${trade.entry_price} | Current: ₹${trade.current_price} | PnL: ${trade.pnl}%`;
+            row.innerHTML = `
+                <td>${trade.symbol}</td>
+                <td>₹${trade.entry_price}</td>
+                <td>₹${trade.current_price}</td>
+                <td>${trade.quantity}</td>
+                <td style="color:${trade.pnl >= 0 ? 'green' : 'red'}">
+                    ${trade.pnl}%
+                </td>
+            `;
 
-            if (trade.pnl >= 0) {
-                li.style.color = "green";
-            } else {
-                li.style.color = "red";
-            }
-
-            list.appendChild(li);
+            tbody.appendChild(row);
         });
 
     } catch (err) {
-        list.innerHTML = "<li>Error loading trades</li>";
-        console.error(err);
+        tbody.innerHTML = "<tr><td colspan='5'>Error loading trades</td></tr>";
+        console.error("Trades error:", err);
     }
 }
 
 
-// -------- AUTO SYSTEM LOOP --------
+// ==========================
+// PLACE ORDER (SAFE VERSION)
+// ==========================
+async function placeOrder() {
+    const symbol = document.getElementById("symbol").value.trim();
+    const quantity = parseInt(document.getElementById("quantity").value);
+    const min = parseFloat(document.getElementById("minPrice").value);
+    const max = parseFloat(document.getElementById("maxPrice").value);
+    const resultBox = document.getElementById("orderResult");
+
+    // 🔴 VALIDATION
+    if (!symbol || !quantity || quantity <= 0) {
+        resultBox.innerText = "❌ Enter valid symbol & quantity";
+        return;
+    }
+
+    if (
+        isNaN(min) ||
+        isNaN(max) ||
+        min <= 0 ||
+        max <= min
+    ) {
+        resultBox.innerText = "❌ Invalid price range";
+        return;
+    }
+
+    // 🔴 BALANCE CHECK
+    const required = quantity * max;
+    if (required > CURRENT_BALANCE) {
+        resultBox.innerText = `❌ Not enough balance (Need ₹${required.toFixed(2)})`;
+        return;
+    }
+
+    resultBox.innerText = "Placing order...";
+
+    try {
+        const res = await fetch(`${API_BASE}/order`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                symbol,
+                quantity,
+                min_price: min,
+                max_price: max
+            })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            resultBox.innerText = data.reason || "❌ Order failed";
+            return;
+        }
+
+        resultBox.innerText = `✅ ${data.status}`;
+
+        // refresh trades after buy
+        loadTrades();
+
+    } catch (err) {
+        resultBox.innerText = "❌ Order error";
+        console.error("Order error:", err);
+    }
+}
+
+
+// ==========================
+// AUTO SELL LOOP
+// ==========================
 setInterval(async () => {
     try {
-        await loadTrades();
-
         const res = await fetch(`${API_BASE}/auto-sell`);
         const data = await res.json();
 
         if (data.length > 0) {
-            console.log("Auto Sell Executed:", data);
+            console.log("Auto Sell:", data);
+            loadTrades();
         }
 
     } catch (err) {
-        console.error("Auto system error", err);
+        console.error("Auto sell error:", err);
     }
 }, 10000);
 
 
-// expose functions to HTML
-window.loadBalance = loadBalance;
-window.runScan = runScan;
-window.placeOrder = placeOrder;
+// ==========================
+// INIT
+// ==========================
+loadBalance();
+loadTrades();
+
+setInterval(loadTrades, 10000);

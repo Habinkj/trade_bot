@@ -7,72 +7,85 @@
 </head>
 <body>
 
-    <!-- TOP BAR -->
-    <header class="topbar">
-        <h1>TradeBot</h1>
-        <span class="status-dot">● Live</span>
-    </header>
+<header class="topbar">
+    <h1>TradeBot</h1>
+    <span class="status-dot">● Live</span>
+</header>
 
-    <!-- MAIN GRID -->
-    <main class="dashboard">
+<main class="dashboard">
 
-        <!-- BALANCE -->
-        <div class="card balance">
-            <h2>Account Balance</h2>
-            <p class="balance">₹<span id="balanceAmount">0</span></p>
-            <button onclick="loadBalance()">Refresh</button>
+    <!-- BALANCE -->
+    <div class="card balance">
+        <h2>Account Balance</h2>
+        <p class="balance">₹<span id="balanceAmount">0</span></p>
+        <button onclick="loadBalance()">Refresh</button>
+    </div>
+
+    <!-- MARKET SCAN -->
+    <div class="card scan">
+        <h2>Market Scan</h2>
+
+        <select id="strategy">
+            <option value="sma">SMA</option>
+            <option value="ema">EMA</option>
+            <option value="supertrend">Supertrend</option>
+        </select>
+
+        <input type="number" id="fast" value="5">
+        <input type="number" id="slow" value="10">
+
+        <button onclick="runScan()">Run Scan</button>
+
+        <table id="scanTable">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Price</th>
+                    <th>Signal</th>
+                    <th>ADX</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- ACTIVE TRADES -->
+    <div class="card trades">
+        <h2>Active Trades</h2>
+        <button onclick="loadTrades()">Refresh</button>
+
+        <table id="tradeTable">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Entry</th>
+                    <th>Current</th>
+                    <th>Qty</th>
+                    <th>PnL %</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- ORDER -->
+    <div class="card order">
+        <h2>Place Order</h2>
+
+        <input type="text" id="symbol" placeholder="Symbol">
+        <input type="number" id="quantity" placeholder="Quantity">
+
+        <div class="price-row">
+            <input type="number" id="minPrice" placeholder="Min Price">
+            <input type="number" id="maxPrice" placeholder="Max Price">
         </div>
 
-        <!-- MARKET SCAN -->
-        <div class="card scan">
-            <h2>Market Scan</h2>
+        <button onclick="placeOrder()">Place Order</button>
+        <p id="orderResult"></p>
+    </div>
 
-            <select id="strategy">
-                <option value="sma">SMA</option>
-                <option value="ema">EMA</option>
-                <option value="supertrend">Supertrend</option>
-            </select>
+</main>
 
-            <input type="number" id="fast" placeholder="Fast" value="5">
-            <input type="number" id="slow" placeholder="Slow" value="10">
-
-            <button onclick="runScan()">Run Scan</button>
-
-            <ul id="scanResults"></ul>
-        </div>
-
-        <!-- ACTIVE TRADES -->
-        <div class="card trades">
-            <h2>Active Trades</h2>
-            <button onclick="loadTrades()">Refresh</button>
-            <ul id="tradeList"></ul>
-        </div>
-
-        <!-- PLACE ORDER -->
-        <div class="card order">
-            <h2>Place Order</h2>
-
-            <input type="text" id="symbol" placeholder="Symbol (e.g. INFY)">
-            <input type="number" id="quantity" placeholder="Quantity">
-
-            <div class="price-row">
-                <input type="number" id="minPrice" placeholder="Min Buy Price (₹)">
-                <input type="number" id="maxPrice" placeholder="Max Buy Price (₹)">
-            </div>
-
-            <p class="warning">
-                ⚠ Investment in securities market are subject to market risks.
-            </p>
-
-            <button id="placeOrderBtn" onclick="placeOrder()">
-                Place Order
-            </button>
-
-            <p id="orderResult"></p>
-        </div>
-
-    </main>
-
-    <script src="/static/script.js"></script>
+<script src="/static/script.js"></script>
 </body>
 </html>
