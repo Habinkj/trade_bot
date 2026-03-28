@@ -11,9 +11,7 @@ async function loadBalance() {
     const res = await fetch(`${API_BASE}/balance`);
     const data = await res.json();
 
-    // backend returns: { "available_cash": 50 }
     CURRENT_BALANCE = data.available_cash;
-
     balanceEl.innerText = `₹${CURRENT_BALANCE.toFixed(2)}`;
   } catch (err) {
     balanceEl.innerText = "Error";
@@ -29,14 +27,14 @@ async function runScan() {
     const slow = document.getElementById("slow").value;
 
     const resultBox = document.getElementById("scanResults");
-    
-      if (strategy === "sma") {
-      if (!fast || !slow || fast <= 0 || slow <= 0 || parseInt(fast) >= parseInt(slow)) {
-        resultBox.innerHTML = "<li>Invalid SMA values</li>";
-        return;
+
+    // SMA validation
+    if (strategy === "sma") {
+        if (!fast || !slow || fast <= 0 || slow <= 0 || parseInt(fast) >= parseInt(slow)) {
+            resultBox.innerHTML = "<li>Invalid SMA values</li>";
+            return;
+        }
     }
-}
-    
 
     resultBox.innerHTML = "Scanning market...";
 
@@ -54,7 +52,8 @@ async function runScan() {
         data.forEach(stock => {
             const li = document.createElement("li");
 
-            li.innerText = `${stock.symbol} - ₹${stock.price} - ${stock.signal}`;
+            // ✅ IMPROVED DISPLAY
+            li.innerText = `${stock.symbol} | ₹${stock.price} | ${stock.signal} | ADX: ${stock.adx} (${stock.strength})`;
 
             if (stock.signal === "BUY") {
                 li.style.color = "green";
@@ -74,6 +73,9 @@ async function runScan() {
 
 // -------- DOM READY --------
 document.addEventListener("DOMContentLoaded", () => {
+
+    loadBalance();   // ✅ load balance immediately
+    loadTrades();    // ✅ load trades immediately
 
     const minPriceInput = document.getElementById("minPrice");
     const maxPriceInput = document.getElementById("maxPrice");
@@ -126,27 +128,24 @@ async function placeOrder() {
   resultBox.innerText = "Placing order...";
 
   try {
+    const requiredAmount = quantity * maxPrice;
 
-   const requiredAmount = quantity * maxPrice;
+    if (requiredAmount > CURRENT_BALANCE) {
+      resultBox.innerText =
+        `❌ Insufficient balance. Need ₹${requiredAmount.toFixed(2)}, have ₹${CURRENT_BALANCE.toFixed(2)}`;
+      return;
+    }
 
-if (requiredAmount > CURRENT_BALANCE) {
-  resultBox.innerText =
-    `❌ Insufficient balance. Need ₹${requiredAmount.toFixed(2)}, have ₹${CURRENT_BALANCE.toFixed(2)}`;
-  return;
-}
-
-resultBox.innerText = "Placing order...";
-
-const response = await fetch(`${API_BASE}/order`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    symbol,
-    quantity,
-    min_price: minPrice,
-    max_price: maxPrice
-  })
-});
+    const response = await fetch(`${API_BASE}/order`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        symbol,
+        quantity,
+        min_price: minPrice,
+        max_price: maxPrice
+      })
+    });
 
     const data = await response.json();
 
@@ -157,26 +156,72 @@ const response = await fetch(`${API_BASE}/order`, {
 
     resultBox.innerText = `✅ ${data.status}`;
 
+    // ✅ refresh trades instantly
+    loadTrades();
+
   } catch (error) {
     resultBox.innerText = "❌ Order failed";
     console.error(error);
   }
 }
-// expose functions to HTML
-window.loadBalance = loadBalance;
-window.runScan = runScan;
-window.placeOrder = placeOrder;
 
 
+// -------- ACTIVE TRADES --------
+async function loadTrades() {
+    const list = document.getElementById("tradeList");
+    list.innerHTML = "Loading...";
+
+    try {
+        const res = await fetch(`${API_BASE}/trades`);
+        const data = await res.json();
+
+        list.innerHTML = "";
+
+        if (data.length === 0) {
+            list.innerHTML = "<li>No active trades</li>";
+            return;
+        }
+
+        data.forEach(trade => {
+            const li = document.createElement("li");
+
+            li.innerText = `${trade.symbol} | Entry: ₹${trade.entry_price} | Current: ₹${trade.current_price} | PnL: ${trade.pnl}%`;
+
+            if (trade.pnl >= 0) {
+                li.style.color = "green";
+            } else {
+                li.style.color = "red";
+            }
+
+            list.appendChild(li);
+        });
+
+    } catch (err) {
+        list.innerHTML = "<li>Error loading trades</li>";
+        console.error(err);
+    }
+}
+
+
+// -------- AUTO SYSTEM (CLEAN VERSION) --------
 setInterval(async () => {
     try {
+        await loadTrades();
+
         const res = await fetch(`${API_BASE}/auto-sell`);
         const data = await res.json();
 
         if (data.length > 0) {
             console.log("Auto Sell Executed:", data);
         }
+
     } catch (err) {
-        console.error("Auto sell error", err);
+        console.error("Auto system error", err);
     }
-}, 10000); // every 10 seconds
+}, 10000);
+
+
+// expose functions to HTML
+window.loadBalance = loadBalance;
+window.runScan = runScan;
+window.placeOrder = placeOrder;

@@ -1,6 +1,3 @@
-import signal
-from unittest import result
-
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from kiteconnect import KiteConnect
@@ -107,7 +104,7 @@ def scan(strategy: str, request: Request):
         except Exception as e:
             print(f"Scan error for {symbol}: {e}")
 
-    # ✅ AFTER LOOP (CORRECT PLACE)
+    # SORT + TOP 3
     results = sorted(results, key=lambda x: x["adx"], reverse=True)
     results = results[:3]
 
@@ -138,7 +135,7 @@ def place_order(payload: dict):
     quantity = int(payload["quantity"])
     min_price = float(payload["min_price"])
     max_price = float(payload["max_price"])
-    side = payload.get("side", "BUY")  # BUY or SELL
+    side = payload.get("side", "BUY")
 
     current_price = get_ltp(symbol)
 
@@ -152,26 +149,37 @@ def place_order(payload: dict):
 
     result = place_trade(symbol, quantity, side)
 
-# 🔥 SAVE TRADE AFTER BUY
+    # SAVE TRADE
     if side.upper() == "BUY":
         ACTIVE_TRADES[symbol] = {
-            "entry_price": get_ltp(symbol),
-            "quantity": quantity
+            "entry_price": current_price,   # ✅ FIXED
+            "quantity": quantity,
+            "sold": False                  # ✅ SAFETY FLAG
         }
 
     return result
+
+
+# --------------------------------------------------
+# AUTO SELL ENGINE
+# --------------------------------------------------
 
 @router.get("/auto-sell")
 def auto_sell():
     results = []
 
     for symbol, trade in list(ACTIVE_TRADES.items()):
+
+        # prevent duplicate sell
+        if trade.get("sold"):
+            continue
+
         current_price = get_ltp(symbol)
         entry_price = trade["entry_price"]
 
         change = (current_price - entry_price) / entry_price * 100
 
-        # 🔥 EXIT CONDITIONS
+        # EXIT CONDITIONS
         if change >= 4:
             reason = "TARGET HIT"
         elif change <= -2:
@@ -179,8 +187,12 @@ def auto_sell():
         else:
             continue
 
-        # 🔥 PLACE SELL ORDER
-        order = place_trade(symbol, trade["quantity"], "SELL")
+        try:
+            order = place_trade(symbol, trade["quantity"], "SELL")
+            print("AUTO SELL:", symbol, reason)
+        except Exception as e:
+            print("Sell failed:", e)
+            continue
 
         results.append({
             "symbol": symbol,
@@ -188,10 +200,39 @@ def auto_sell():
             "reason": reason
         })
 
-        # 🔥 REMOVE TRADE AFTER SELL
+        # mark + remove
+        trade["sold"] = True
         del ACTIVE_TRADES[symbol]
 
     return results
+
+
+# --------------------------------------------------
+# ACTIVE TRADES VIEW
+# --------------------------------------------------
+
+@router.get("/trades")
+def get_trades():
+    results = []
+
+    for symbol, trade in ACTIVE_TRADES.items():
+        current_price = get_ltp(symbol)
+        entry_price = trade["entry_price"]
+        qty = trade["quantity"]
+
+        pnl = ((current_price - entry_price) / entry_price) * 100
+
+        results.append({
+            "symbol": symbol,
+            "entry_price": round(entry_price, 2),
+            "current_price": round(current_price, 2),
+            "quantity": qty,
+            "pnl": round(pnl, 2)
+        })
+
+    return results
+
+
 # --------------------------------------------------
 # HELPERS
 # --------------------------------------------------

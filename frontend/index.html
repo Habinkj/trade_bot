@@ -13,69 +13,73 @@
     </header>
 
     <main class="dashboard">
+        <div class="grid">
 
-        <!-- Account Balance Card -->
-        <div class="card">
-            <h2>Account Balance</h2>
-            <p class="balance">₹<span id="balanceAmount">0</span></p>
-        <button onclick="loadBalance()">Refresh</button>
+            <!-- Account Balance Card -->
+            <div class="card">
+                <h2>Account Balance</h2>
+                <p class="balance">₹<span id="balanceAmount">0</span></p>
+                <button onclick="loadBalance()">Refresh</button>
+            </div>
+
+            <!-- Market Scan Card -->
+            <div class="card">
+                <h2>🔍 Smart Market Scan</h2>
+
+                <div class="strategy-row">
+                    <select id="strategy">
+                        <option value="sma">SMA</option>
+                        <option value="ema">EMA</option>
+                        <option value="supertrend">Supertrend</option>
+                    </select>
+
+                    <input type="number" id="fast" placeholder="Fast MA (e.g. 5)" value="5">
+                    <input type="number" id="slow" placeholder="Slow MA (e.g. 10)" value="10">
+                </div>
+
+                <button onclick="runScan()">Scan Market</button>
+
+                <ul id="scanResults">
+                    <li>Run scan to see opportunities</li>
+                </ul>
+            </div>
+
+            <!-- Active Trades Card -->
+            <div class="card">
+                <h2>📊 Active Trades (Live)</h2>
+                <button onclick="loadTrades()">Refresh</button>
+
+                <ul id="tradeList">
+                    <li>No active trades</li>
+                </ul>
+            </div>
+
+            <!-- Place Order Card -->
+            <div class="card">
+                <h2>Place Order</h2>
+
+                <input type="text" id="symbol" placeholder="Symbol (e.g. INFY)">
+                <input type="number" id="quantity" placeholder="Quantity">
+
+                <input type="hidden" id="side" value="BUY">
+
+                <div class="price-row">
+                    <input type="number" id="minPrice" placeholder="Min Buy Price (₹)" />
+                    <input type="number" id="maxPrice" placeholder="Max Buy Price (₹)" />
+                </div>
+
+                <p class="warning">
+                    &#9888; Investment in securities market are subject to market risks. Read all related documents carefully before investing.
+                </p>
+
+                <button id="placeOrderBtn" onclick="placeOrder()">
+                    Place Order
+                </button>
+
+                <p id="orderResult"></p>
+            </div>
+
         </div>
-
-        <!-- Market Scan Card -->
-        <div class="card">
-    <h2>Market Scan</h2>
-
-  <div class="strategy-row">
-
-    <select id="strategy">
-        <option value="sma">SMA</option>
-        <option value="ema">EMA</option>
-        <option value="supertrend">Supertrend</option>
-    </select>
-
-    <input type="number" id="fast" placeholder="Fast" value="5">
-    <input type="number" id="slow" placeholder="Slow" value="10">
-
-</div>
-
-    <button onclick="runScan()">Run Scan</button>
-
-    <ul id="scanResults"></ul>
-</div>
-
-        <!-- Place Order Card -->
-        <div class="card">
-            <h2>Place Order</h2>
-
-            <input type="text" id="symbol" placeholder="Symbol (e.g. INFY)">
-            <input type="number" id="quantity" placeholder="Quantity">
-
-            <input type="hidden" id="side" value="BUY">
-            <div class="price-row">
-  <input
-    type="number"
-    id="minPrice"
-    placeholder="Min Buy Price (₹)"
-  />
-
-  <input
-    type="number"
-    id="maxPrice"
-    placeholder="Max Buy Price (₹)"
-  />
-</div>
-<p class="warning">&#9888;Investment in securities market are subject to market risks. Read all the related documents carefully before investing</p>
-
-        <button
-            id="placeOrderBtn"
-            onclick="placeOrder()">
-            Place Order
-        </button>
-
-<p id="orderResult"></p>
-            
-        </div>
-
     </main>
 
     <script src="/static/script.js"></script>
