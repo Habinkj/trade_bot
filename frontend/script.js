@@ -166,3 +166,17 @@ const response = await fetch(`${API_BASE}/order`, {
 window.loadBalance = loadBalance;
 window.runScan = runScan;
 window.placeOrder = placeOrder;
+
+
+setInterval(async () => {
+    try {
+        const res = await fetch(`${API_BASE}/auto-sell`);
+        const data = await res.json();
+
+        if (data.length > 0) {
+            console.log("Auto Sell Executed:", data);
+        }
+    } catch (err) {
+        console.error("Auto sell error", err);
+    }
+}, 10000); // every 10 seconds

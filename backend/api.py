@@ -1,3 +1,6 @@
+import signal
+from unittest import result
+
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from kiteconnect import KiteConnect
@@ -22,6 +25,7 @@ API_KEY = os.getenv("KITE_API_KEY")
 API_SECRET = os.getenv("KITE_API_SECRET")
 
 router = APIRouter()
+ACTIVE_TRADES = {}
 
 # --------------------------------------------------
 # LOGIN FLOW
@@ -95,7 +99,8 @@ def scan(strategy: str, request: Request):
                 continue
 
             # 🔥 ONLY RETURN VALID SIGNALS
-            if signal == "BUY":
+            # add results
+            if signal == "BUY" and adx_value > 25:
                 results.append({
                     "symbol": symbol,
                     "price": round(df["close"].iloc[-1], 2),
@@ -104,10 +109,13 @@ def scan(strategy: str, request: Request):
                     "strength": strength
                 })
 
-        except Exception as e:
-            print(f"Scan error for {symbol}: {e}")
 
-    return results
+            results = sorted(results, key=lambda x: x["adx"], reverse=True)
+
+            results = results[:3]
+
+
+            return results
 
 
 # --------------------------------------------------
@@ -146,9 +154,48 @@ def place_order(payload: dict):
             "current_price": current_price
         }
 
-    return place_trade(symbol, quantity, side)
+    result = place_trade(symbol, quantity, side)
 
+# 🔥 SAVE TRADE AFTER BUY
+    if side.upper() == "BUY":
+        ACTIVE_TRADES[symbol] = {
+            "entry_price": get_ltp(symbol),
+            "quantity": quantity
+        }
 
+    return result
+
+@router.get("/auto-sell")
+def auto_sell():
+    results = []
+
+    for symbol, trade in list(ACTIVE_TRADES.items()):
+        current_price = get_ltp(symbol)
+        entry_price = trade["entry_price"]
+
+        change = (current_price - entry_price) / entry_price * 100
+
+        # 🔥 EXIT CONDITIONS
+        if change >= 4:
+            reason = "TARGET HIT"
+        elif change <= -2:
+            reason = "STOPLOSS HIT"
+        else:
+            continue
+
+        # 🔥 PLACE SELL ORDER
+        order = place_trade(symbol, trade["quantity"], "SELL")
+
+        results.append({
+            "symbol": symbol,
+            "exit_price": round(current_price, 2),
+            "reason": reason
+        })
+
+        # 🔥 REMOVE TRADE AFTER SELL
+        del ACTIVE_TRADES[symbol]
+
+    return results
 # --------------------------------------------------
 # HELPERS
 # --------------------------------------------------
