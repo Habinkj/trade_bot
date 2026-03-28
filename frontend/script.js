@@ -52,14 +52,38 @@ async function runScan() {
         data.forEach(stock => {
             const li = document.createElement("li");
 
-            // ✅ IMPROVED DISPLAY
+            // display
             li.innerText = `${stock.symbol} | ₹${stock.price} | ${stock.signal} | ADX: ${stock.adx} (${stock.strength})`;
 
+            // color
             if (stock.signal === "BUY") {
                 li.style.color = "green";
             } else if (stock.signal === "SELL") {
                 li.style.color = "red";
             }
+
+            // 🔥 CLICK → AUTO-FILL ORDER
+            li.style.cursor = "pointer";
+
+            li.onclick = () => {
+                document.getElementById("symbol").value = stock.symbol;
+
+                const price = stock.price;
+                const min = (price * 0.99).toFixed(2);
+                const max = (price * 1.01).toFixed(2);
+
+                document.getElementById("minPrice").value = min;
+                document.getElementById("maxPrice").value = max;
+            };
+
+            // hover effect
+            li.onmouseover = () => {
+                li.style.background = "#eef2ff";
+            };
+
+            li.onmouseout = () => {
+                li.style.background = "transparent";
+            };
 
             resultBox.appendChild(li);
         });
@@ -74,8 +98,8 @@ async function runScan() {
 // -------- DOM READY --------
 document.addEventListener("DOMContentLoaded", () => {
 
-    loadBalance();   // ✅ load balance immediately
-    loadTrades();    // ✅ load trades immediately
+    loadBalance();   // load balance instantly
+    loadTrades();    // load trades instantly
 
     const minPriceInput = document.getElementById("minPrice");
     const maxPriceInput = document.getElementById("maxPrice");
@@ -156,7 +180,7 @@ async function placeOrder() {
 
     resultBox.innerText = `✅ ${data.status}`;
 
-    // ✅ refresh trades instantly
+    // refresh trades after buy
     loadTrades();
 
   } catch (error) {
@@ -203,7 +227,7 @@ async function loadTrades() {
 }
 
 
-// -------- AUTO SYSTEM (CLEAN VERSION) --------
+// -------- AUTO SYSTEM LOOP --------
 setInterval(async () => {
     try {
         await loadTrades();
