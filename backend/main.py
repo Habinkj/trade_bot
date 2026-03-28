@@ -2,23 +2,35 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from backend.api import router
+import os
 
 app = FastAPI()
 
-# Include API routes
+# -------------------------------
+# PATH FIX (CRITICAL)
+# -------------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# ../frontend relative to backend/
+FRONTEND_DIR = os.path.join(BASE_DIR, "../frontend")
+
+# -------------------------------
+# ROUTES
+# -------------------------------
 app.include_router(router)
 
-# Serve static frontend files
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
+# -------------------------------
+# STATIC FILES (FIXED)
+# -------------------------------
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
-
-# Serve main page
+# -------------------------------
+# SERVE FRONTEND
+# -------------------------------
 @app.get("/")
 def serve_home():
-    return FileResponse("frontend/index.html")
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
-
-# Optional: if you had /login before
 @app.get("/login")
 def serve_login():
-    return FileResponse("frontend/index.html")
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
