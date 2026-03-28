@@ -73,17 +73,14 @@ def scan(strategy: str, request: Request):
         try:
             df = get_historical(symbol)
 
-            # 🔥 ADX FOR ALL STRATEGIES
             adx = calculate_adx(df)
             adx_value = adx.iloc[-1]
             strength = "STRONG" if adx_value > 25 else "WEAK"
 
-            # 🔥 STRATEGY SELECTION
             if strategy == "sma":
                 fast = int(request.query_params.get("fast", 5))
                 slow = int(request.query_params.get("slow", 10))
 
-                # safety check
                 if fast <= 0 or slow <= 0 or fast >= slow:
                     continue
 
@@ -98,8 +95,6 @@ def scan(strategy: str, request: Request):
             else:
                 continue
 
-            # 🔥 ONLY RETURN VALID SIGNALS
-            # add results
             if signal == "BUY" and adx_value > 25:
                 results.append({
                     "symbol": symbol,
@@ -109,13 +104,14 @@ def scan(strategy: str, request: Request):
                     "strength": strength
                 })
 
+        except Exception as e:
+            print(f"Scan error for {symbol}: {e}")
 
-            results = sorted(results, key=lambda x: x["adx"], reverse=True)
+    # ✅ AFTER LOOP (CORRECT PLACE)
+    results = sorted(results, key=lambda x: x["adx"], reverse=True)
+    results = results[:3]
 
-            results = results[:3]
-
-
-            return results
+    return results
 
 
 # --------------------------------------------------
