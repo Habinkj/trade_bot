@@ -1,8 +1,8 @@
 body {
     margin: 0;
     font-family: "Segoe UI", Roboto, Arial, sans-serif;
-    background: #0f172a; /* dark theme */
-    color: white;
+    background: #F8FAFC;
+    color: #1e293b;
 }
 
 /* Top Bar */
@@ -11,8 +11,8 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 15px 30px;
-    background: #020617;
-    border-bottom: 1px solid #1e293b;
+    background: #D9EAFD;
+    border-bottom: 1px solid #BCCCDC;
 }
 
 .topbar h1 {
@@ -21,10 +21,10 @@ body {
 }
 
 .status-dot {
-    color: #22c55e;
+    color: green;
 }
 
-/* GRID LAYOUT */
+/* GRID */
 .dashboard {
     display: grid;
     grid-template-columns: 1fr 2fr 1fr;
@@ -35,28 +35,17 @@ body {
 
 /* Cards */
 .card {
-    background: #020617;
+    background: #D9EAFD;
     padding: 20px;
     border-radius: 10px;
-    border: 1px solid #1e293b;
+    border: 1px solid #BCCCDC;
 }
 
-/* Layout positions */
-.card.balance {
-    grid-column: 1;
-}
-
-.card.scan {
-    grid-column: 2;
-}
-
-.card.trades {
-    grid-column: 3;
-}
-
-.card.order {
-    grid-column: 2;
-}
+/* Layout */
+.balance { grid-column: 1; }
+.scan { grid-column: 2; }
+.trades { grid-column: 3; }
+.order { grid-column: 2; }
 
 /* Inputs */
 input, select {
@@ -64,9 +53,9 @@ input, select {
     padding: 10px;
     margin-top: 8px;
     border-radius: 6px;
-    border: 1px solid #334155;
-    background: #0f172a;
-    color: white;
+    border: 1px solid #BCCCDC;
+    background: #F8FAFC;
+    color: #1e293b;
 }
 
 /* Buttons */
@@ -74,7 +63,7 @@ button {
     width: 100%;
     margin-top: 10px;
     padding: 10px;
-    background: #2563eb;
+    background: #9AA6B2;
     border: none;
     border-radius: 6px;
     color: white;
@@ -82,10 +71,10 @@ button {
 }
 
 button:hover {
-    background: #1d4ed8;
+    background: #7f8c98;
 }
 
-/* Results */
+/* Lists */
 ul {
     margin-top: 10px;
     padding-left: 15px;
@@ -93,10 +82,23 @@ ul {
 
 li {
     padding: 6px;
-    cursor: pointer;
     border-radius: 4px;
+    cursor: pointer;
 }
 
 li:hover {
-    background: #1e293b;
+    background: #BCCCDC;
+}
+
+/* Price row */
+.price-row {
+    display: flex;
+    gap: 10px;
+}
+
+/* Warning */
+.warning {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: 10px;
 }
