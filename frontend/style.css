@@ -1,91 +1,146 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>TradeBot Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
+/* ---------- GLOBAL ---------- */
+body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+}
 
-<header class="topbar">
-    <h1>TradeBot</h1>
-    <span class="status-dot">● Live</span>
-</header>
+/* ---------- TOP BAR ---------- */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 40px;
+    background: #d9eafd;
+    border-bottom: 1px solid #bcccdc;
+}
 
-<main class="dashboard">
+.topbar h1 {
+    margin: 0;
+    font-size: 24px;
+}
 
-    <!-- BALANCE -->
-    <div class="card balance">
-        <h2>Account Balance</h2>
-        <p class="balance">₹<span id="balanceAmount">0</span></p>
-        <button onclick="loadBalance()">Refresh</button>
-    </div>
+.status-dot {
+    color: green;
+    font-weight: bold;
+}
 
-    <!-- MARKET SCAN -->
-    <div class="card scan">
-        <h2>Market Scan</h2>
+/* ---------- DASHBOARD GRID ---------- */
+.dashboard {
+    max-width: 1400px;
+    margin: 30px auto;
+    padding: 0 30px;
 
-        <select id="strategy">
-            <option value="sma">SMA</option>
-            <option value="ema">EMA</option>
-            <option value="supertrend">Supertrend</option>
-        </select>
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    gap: 25px;
+}
 
-        <input type="number" id="fast" value="5">
-        <input type="number" id="slow" value="10">
+/* ---------- CARDS ---------- */
+.card {
+    background: #ffffff;
+    border: 1px solid #bcccdc;
+    border-radius: 10px;
+    padding: 20px;
+}
 
-        <button onclick="runScan()">Run Scan</button>
+/* Place order full width */
+.place-order {
+    grid-column: span 3;
+}
 
-        <table id="scanTable">
-            <thead>
-                <tr>
-                    <th>Symbol</th>
-                    <th>Price</th>
-                    <th>Signal</th>
-                    <th>ADX</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
+/* ---------- HEADINGS ---------- */
+.card h2 {
+    margin-top: 0;
+    font-size: 18px;
+}
 
-    <!-- ACTIVE TRADES -->
-    <div class="card trades">
-        <h2>Active Trades</h2>
-        <button onclick="loadTrades()">Refresh</button>
+/* ---------- BUTTONS ---------- */
+button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    background: #d9eafd;
+    border: 1px solid #9aa6b2;
+    border-radius: 6px;
+    cursor: pointer;
+}
 
-        <table id="tradeTable">
-            <thead>
-                <tr>
-                    <th>Symbol</th>
-                    <th>Entry</th>
-                    <th>Current</th>
-                    <th>Qty</th>
-                    <th>PnL %</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
+button:hover {
+    background: #bcccdc;
+}
 
-    <!-- ORDER -->
-    <div class="card order">
-        <h2>Place Order</h2>
+/* ---------- INPUTS ---------- */
+input, select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #9aa6b2;
+    border-radius: 6px;
+}
 
-        <input type="text" id="symbol" placeholder="Symbol">
-        <input type="number" id="quantity" placeholder="Quantity">
+/* ---------- ROW INPUTS ---------- */
+.row {
+    display: flex;
+    gap: 10px;
+}
 
-        <div class="price-row">
-            <input type="number" id="minPrice" placeholder="Min Price">
-            <input type="number" id="maxPrice" placeholder="Max Price">
-        </div>
+.row input {
+    flex: 1;
+}
 
-        <button onclick="placeOrder()">Place Order</button>
-        <p id="orderResult"></p>
-    </div>
+/* ---------- TABLE ---------- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
 
-</main>
+th {
+    background: #d9eafd;
+    padding: 10px;
+    text-align: left;
+    font-size: 14px;
+}
 
-<script src="/static/script.js"></script>
-</body>
-</html>
+td {
+    padding: 10px;
+    border-top: 1px solid #bcccdc;
+    font-size: 14px;
+}
+
+/* ---------- COLORS ---------- */
+.green {
+    color: green;
+    font-weight: bold;
+}
+
+.red {
+    color: red;
+    font-weight: bold;
+}
+
+/* ---------- BALANCE ---------- */
+.balance {
+    font-size: 24px;
+    margin: 10px 0;
+}
+
+/* ---------- WARNING ---------- */
+.warning {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 10px;
+}
+
+/* ---------- RESPONSIVE (only fallback) ---------- */
+@media (max-width: 1000px) {
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+
+    .place-order {
+        grid-column: span 1;
+    }
+}
