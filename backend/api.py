@@ -118,11 +118,7 @@ def scan(strategy: str, request: Request):
 @router.get("/balance")
 def balance():
     kite = get_kite()
-    margins = kite.margins()["equity"]
-
-    return {
-        "available_cash": margins["available"]["cash"]
-    }
+    return kite.margins()
 
 
 # --------------------------------------------------
