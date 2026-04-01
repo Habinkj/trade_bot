@@ -17,7 +17,6 @@ from backend.strategy import (
 )
 from backend.config_loader import load_watchlist
 
-
 API_KEY = os.getenv("KITE_API_KEY")
 API_SECRET = os.getenv("KITE_API_SECRET")
 
@@ -72,7 +71,6 @@ def scan(strategy: str, request: Request):
 
             adx = calculate_adx(df)
             adx_value = adx.iloc[-1]
-            strength = "STRONG" if adx_value > 25 else "WEAK"
 
             if strategy == "sma":
                 fast = int(request.query_params.get("fast", 5))
@@ -97,16 +95,13 @@ def scan(strategy: str, request: Request):
                     "symbol": symbol,
                     "price": round(df["close"].iloc[-1], 2),
                     "signal": signal,
-                    "adx": round(adx_value, 2),
-                    "strength": strength
+                    "adx": round(adx_value, 2)
                 })
 
         except Exception as e:
             print(f"Scan error for {symbol}: {e}")
 
-    # SORT + TOP 3
-    results = sorted(results, key=lambda x: x["adx"], reverse=True)
-    results = results[:3]
+    results = sorted(results, key=lambda x: x["adx"], reverse=True)[:3]
 
     return results
 
@@ -127,42 +122,64 @@ def balance():
 
 
 # --------------------------------------------------
-# PLACE ORDER (BUY / SELL)
+# PLACE ORDER
 # --------------------------------------------------
 
 @router.post("/order")
 def place_order(payload: dict):
+
+    # 🔒 VALIDATION
+    required_fields = ["symbol", "quantity", "min_price", "max_price"]
+    if not all(k in payload for k in required_fields):
+        return JSONResponse(
+            status_code=400,
+            content={"reason": "Invalid payload"}
+        )
+
     symbol = payload["symbol"]
     quantity = int(payload["quantity"])
     min_price = float(payload["min_price"])
     max_price = float(payload["max_price"])
     side = payload.get("side", "BUY")
 
-    current_price = get_ltp(symbol)
+    try:
+        current_price = get_ltp(symbol)
+    except Exception as e:
+        return JSONResponse(
+            status_code=400,
+            content={"reason": f"LTP error: {str(e)}"}
+        )
 
-    # PRICE SAFETY CHECK
-    if current_price < min_price or current_price > max_price:
+    # 🔒 PRICE CHECK
+    if not (min_price <= current_price <= max_price):
         return {
             "status": "REJECTED",
             "reason": "Price out of allowed range",
             "current_price": current_price
         }
 
-    result = place_trade(symbol, quantity, side)
+    # 🔥 ORDER EXECUTION
+    try:
+        result = place_trade(symbol, quantity, side)
+    except Exception as e:
+        return JSONResponse(
+            status_code=400,
+            content={"reason": str(e)}
+        )
 
     # SAVE TRADE
     if side.upper() == "BUY":
         ACTIVE_TRADES[symbol] = {
-            "entry_price": current_price,   # ✅ FIXED
+            "entry_price": current_price,
             "quantity": quantity,
-            "sold": False                  # ✅ SAFETY FLAG
+            "sold": False
         }
 
     return result
 
 
 # --------------------------------------------------
-# AUTO SELL ENGINE
+# AUTO SELL
 # --------------------------------------------------
 
 @router.get("/auto-sell")
@@ -171,16 +188,17 @@ def auto_sell():
 
     for symbol, trade in list(ACTIVE_TRADES.items()):
 
-        # prevent duplicate sell
         if trade.get("sold"):
             continue
 
-        current_price = get_ltp(symbol)
-        entry_price = trade["entry_price"]
+        try:
+            current_price = get_ltp(symbol)
+        except Exception:
+            continue
 
+        entry_price = trade["entry_price"]
         change = (current_price - entry_price) / entry_price * 100
 
-        # EXIT CONDITIONS
         if change >= 4:
             reason = "TARGET HIT"
         elif change <= -2:
@@ -189,8 +207,7 @@ def auto_sell():
             continue
 
         try:
-            order = place_trade(symbol, trade["quantity"], "SELL")
-            print("AUTO SELL:", symbol, reason)
+            place_trade(symbol, trade["quantity"], "SELL")
         except Exception as e:
             print("Sell failed:", e)
             continue
@@ -201,7 +218,6 @@ def auto_sell():
             "reason": reason
         })
 
-        # mark + remove
         trade["sold"] = True
         del ACTIVE_TRADES[symbol]
 
@@ -209,7 +225,7 @@ def auto_sell():
 
 
 # --------------------------------------------------
-# ACTIVE TRADES VIEW
+# TRADES
 # --------------------------------------------------
 
 @router.get("/trades")
@@ -217,7 +233,11 @@ def get_trades():
     results = []
 
     for symbol, trade in ACTIVE_TRADES.items():
-        current_price = get_ltp(symbol)
+        try:
+            current_price = get_ltp(symbol)
+        except Exception:
+            continue
+
         entry_price = trade["entry_price"]
         qty = trade["quantity"]
 
@@ -260,7 +280,7 @@ def place_trade(symbol: str, quantity: int, side: str):
         transaction_type=transaction_type,
         quantity=quantity,
         order_type=kite.ORDER_TYPE_MARKET,
-        product=kite.PRODUCT_CNC
+        product=kite.PRODUCT_MIS   # 🔥 FIXED HERE
     )
 
     return {
