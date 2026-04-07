@@ -1,4 +1,4 @@
-const API_BASE = "https://tradebot-iuqd.onrender.com";
+const API_BASE = "https://trade-bot-hvfi.onrender.com";
 
 let CURRENT_BALANCE = 0;
 
