@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from kiteconnect import KiteConnect
 import os
+import json
 from datetime import datetime
 
 from backend.indicators import calculate_adx
@@ -20,12 +21,43 @@ from backend.config_loader import load_watchlist
 
 API_KEY = os.getenv("KITE_API_KEY")
 API_SECRET = os.getenv("KITE_API_SECRET")
+TRADES_FILE = "backend/data/active_trades.json"
 
 router = APIRouter()
 
-# Global dictionary to track trades
-# Now includes 'entry_date' to calculate holding period
-ACTIVE_TRADES = {}
+# --------------------------------------------------
+# PERSISTENCE HELPERS (Keeps data alive after restart)
+# --------------------------------------------------
+
+def load_trades():
+    """Loads active trades from JSON file to RAM"""
+    if os.path.exists(TRADES_FILE):
+        try:
+            with open(TRADES_FILE, "r") as f:
+                data = json.load(f)
+                # Convert ISO string dates back to Python datetime objects
+                for sym in data:
+                    data[sym]["entry_date"] = datetime.fromisoformat(data[sym]["entry_date"])
+                return data
+        except Exception as e:
+            print(f"Error loading trades: {e}")
+    return {}
+
+def save_trades(trades):
+    """Saves current RAM trades to JSON file"""
+    os.makedirs(os.path.dirname(TRADES_FILE), exist_ok=True)
+    serializable = {}
+    for sym, details in trades.items():
+        copy = details.copy()
+        # JSON cannot store datetime objects, so we convert to string
+        copy["entry_date"] = details["entry_date"].isoformat()
+        serializable[sym] = copy
+    
+    with open(TRADES_FILE, "w") as f:
+        json.dump(serializable, f, indent=4)
+
+# Load trades into memory when the server starts
+ACTIVE_TRADES = load_trades()
 
 # --------------------------------------------------
 # LOGIN FLOW
@@ -35,7 +67,6 @@ ACTIVE_TRADES = {}
 def login():
     return RedirectResponse(get_login_url())
 
-
 @router.get("/callback")
 def callback(request: Request):
     request_token = request.query_params.get("request_token")
@@ -43,7 +74,6 @@ def callback(request: Request):
     data = kite.generate_session(request_token, api_secret=API_SECRET)
     save_access_token(data["access_token"])
     return {"status": "Login successful. You can close this tab."}
-
 
 # --------------------------------------------------
 # MARKET SCAN (Daily Timeframe)
@@ -61,7 +91,7 @@ def scan(strategy: str, request: Request):
 
     for symbol in watchlist:
         try:
-            df = get_historical(symbol) # Fetches daily data
+            df = get_historical(symbol) # Now fetches DAILY candles
             adx_value = calculate_adx(df).iloc[-1]
 
             if strategy == "sma":
@@ -76,7 +106,7 @@ def scan(strategy: str, request: Request):
             else:
                 continue
 
-            # ADX > 25 confirms a strong swing trend
+            # ADX > 25 confirms a strong trend for swing entry
             if signal == "BUY" and adx_value > 25:
                 results.append({
                     "symbol": symbol,
@@ -89,9 +119,21 @@ def scan(strategy: str, request: Request):
 
     return sorted(results, key=lambda x: x["adx"], reverse=True)[:3]
 
+# --------------------------------------------------
+# BALANCE
+# --------------------------------------------------
+
+@router.get("/balance")
+def balance():
+    kite = get_kite()
+    margins = kite.margins()["equity"]
+    return {
+        "available_cash": margins["available"]["cash"],
+        "total_balance": margins["net"]
+    }
 
 # --------------------------------------------------
-# PLACE ORDER (CNC for Swing Trading)
+# PLACE ORDER (With CNC & Persistence)
 # --------------------------------------------------
 
 @router.post("/order")
@@ -113,26 +155,27 @@ def place_order(payload: dict):
         result = place_trade(symbol, quantity, side)
 
         if side.upper() == "BUY":
-            # entry_date allows the bot to count days held
+            # Track the entry date for the 6-day rule
             ACTIVE_TRADES[symbol] = {
                 "entry_price": current_price,
                 "quantity": quantity,
                 "entry_date": datetime.now(), 
                 "sold": False
             }
+            save_trades(ACTIVE_TRADES) # Save to JSON immediately
+        
         return result
     except Exception as e:
         return JSONResponse(status_code=400, content={"reason": str(e)})
 
-
 # --------------------------------------------------
-# AUTO SELL (Price Targets + Time-Based Exit)
+# AUTO SELL (Price + 6-Day Time Exit)
 # --------------------------------------------------
 
 @router.get("/auto-sell")
 def auto_sell():
     results = []
-    MAX_HOLDING_DAYS = 6  # Time-based exit for swing trading
+    MAX_HOLDING_DAYS = 6 # Limit for swing trade
 
     for symbol, trade in list(ACTIVE_TRADES.items()):
         if trade.get("sold"): continue
@@ -141,19 +184,13 @@ def auto_sell():
             current_price = get_ltp(symbol)
             entry_price = trade["entry_price"]
             change = (current_price - entry_price) / entry_price * 100
-            
-            # Days calculation
             days_held = (datetime.now() - trade["entry_date"]).days
 
             reason = None
-            
-            # 1. Take Profit (10%)
             if change >= 10:
                 reason = "TARGET HIT"
-            # 2. Stop Loss (5%)
             elif change <= -5:
                 reason = "STOPLOSS HIT"
-            # 3. Time-based Exit (Swing duration complete)
             elif days_held >= MAX_HOLDING_DAYS:
                 reason = f"TIME LIMIT REACHED ({MAX_HOLDING_DAYS} Days)"
 
@@ -165,8 +202,9 @@ def auto_sell():
                     "reason": reason,
                     "days_held": days_held
                 })
-                trade["sold"] = True
+                # Remove from memory and update JSON file
                 del ACTIVE_TRADES[symbol]
+                save_trades(ACTIVE_TRADES)
                 
         except Exception as e:
             print(f"Auto-sell failed for {symbol}: {e}")
@@ -174,9 +212,8 @@ def auto_sell():
 
     return results
 
-
 # --------------------------------------------------
-# ACTIVE TRADES (Frontend Endpoint)
+# TRADES (UI Endpoint)
 # --------------------------------------------------
 
 @router.get("/trades")
@@ -199,24 +236,25 @@ def get_trades():
         except: continue
     return results
 
-
 # --------------------------------------------------
 # HELPERS
 # --------------------------------------------------
 
 def place_trade(symbol: str, quantity: int, side: str):
     kite = get_kite()
-    t_type = kite.TRANSACTION_TYPE_BUY if side.upper() == "BUY" else kite.TRANSACTION_TYPE_SELL
+    transaction_type = (
+        kite.TRANSACTION_TYPE_BUY if side.upper() == "BUY" 
+        else kite.TRANSACTION_TYPE_SELL
+    )
 
-    # Using PRODUCT_CNC to allow overnight holding
+    # PRODUCT_CNC is mandatory for Swing Trading to hold overnight
     order_id = kite.place_order(
         variety=kite.VARIETY_REGULAR,
         exchange=kite.EXCHANGE_NSE,
         tradingsymbol=symbol,
-        transaction_type=t_type,
+        transaction_type=transaction_type,
         quantity=quantity,
         order_type=kite.ORDER_TYPE_MARKET,
         product=kite.PRODUCT_CNC  
     )
-
     return {"status": f"{side.upper()}_ORDER_PLACED", "order_id": order_id}
