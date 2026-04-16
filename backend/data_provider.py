@@ -5,13 +5,12 @@ from backend.zerodha_session import get_kite
 from backend.instruments import get_token
 
 CACHE = {}
-CACHE_EXPIRY = 300  # 5 minutes
+CACHE_EXPIRY = 3600  # 1 hour cache for daily data
 
 
 def get_historical(symbol):
     now = time.time()
 
-    # Return cached data if available
     if symbol in CACHE:
         df, timestamp = CACHE[symbol]
         if now - timestamp < CACHE_EXPIRY:
@@ -21,18 +20,17 @@ def get_historical(symbol):
     instrument_token = get_token(symbol)
 
     to_date = datetime.now()
-    from_date = to_date - timedelta(days=7)
+    # Swing trading needs ~200 days for stability
+    from_date = to_date - timedelta(days=200)
 
     data = kite.historical_data(
         instrument_token,
         from_date,
         to_date,
-        "5minute"
+        "day" # Changed from 5minute to day
     )
 
     df = pd.DataFrame(data)
-
-    # Save in cache
     CACHE[symbol] = (df, now)
 
     return df

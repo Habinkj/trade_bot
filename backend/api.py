@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from kiteconnect import KiteConnect
 import os
+from datetime import datetime
 
 from backend.indicators import calculate_adx
 from backend.zerodha_session import (
@@ -9,7 +10,7 @@ from backend.zerodha_session import (
     get_login_url,
     save_access_token
 )
-from backend.data_provider import get_historical
+from backend.data_provider import get_historical, get_ltp
 from backend.strategy import (
     sma_dynamic_signal,
     ema_cross_signal,
@@ -21,6 +22,9 @@ API_KEY = os.getenv("KITE_API_KEY")
 API_SECRET = os.getenv("KITE_API_SECRET")
 
 router = APIRouter()
+
+# Global dictionary to track trades
+# Now includes 'entry_date' to calculate holding period
 ACTIVE_TRADES = {}
 
 # --------------------------------------------------
@@ -35,21 +39,14 @@ def login():
 @router.get("/callback")
 def callback(request: Request):
     request_token = request.query_params.get("request_token")
-
     kite = KiteConnect(api_key=API_KEY)
-
-    data = kite.generate_session(
-        request_token,
-        api_secret=API_SECRET
-    )
-
+    data = kite.generate_session(request_token, api_secret=API_SECRET)
     save_access_token(data["access_token"])
-
     return {"status": "Login successful. You can close this tab."}
 
 
 # --------------------------------------------------
-# MARKET SCAN
+# MARKET SCAN (Daily Timeframe)
 # --------------------------------------------------
 
 @router.get("/scan")
@@ -57,39 +54,29 @@ def scan(strategy: str, request: Request):
     try:
         get_kite()
     except Exception:
-        return JSONResponse(
-            status_code=401,
-            content={"login_url": get_login_url()}
-        )
+        return JSONResponse(status_code=401, content={"login_url": get_login_url()})
 
     watchlist = load_watchlist()
     results = []
 
     for symbol in watchlist:
         try:
-            df = get_historical(symbol)
-
-            adx = calculate_adx(df)
-            adx_value = adx.iloc[-1]
+            df = get_historical(symbol) # Fetches daily data
+            adx_value = calculate_adx(df).iloc[-1]
 
             if strategy == "sma":
                 fast = int(request.query_params.get("fast", 5))
                 slow = int(request.query_params.get("slow", 10))
-
-                if fast <= 0 or slow <= 0 or fast >= slow:
-                    continue
-
+                if fast <= 0 or slow <= 0 or fast >= slow: continue
                 signal = sma_dynamic_signal(df, fast, slow)
-
             elif strategy == "ema":
                 signal = ema_cross_signal(df)
-
             elif strategy == "supertrend":
                 signal = supertrend_signal(df)
-
             else:
                 continue
 
+            # ADX > 25 confirms a strong swing trend
             if signal == "BUY" and adx_value > 25:
                 results.append({
                     "symbol": symbol,
@@ -97,160 +84,119 @@ def scan(strategy: str, request: Request):
                     "signal": signal,
                     "adx": round(adx_value, 2)
                 })
-
         except Exception as e:
             print(f"Scan error for {symbol}: {e}")
 
-    results = sorted(results, key=lambda x: x["adx"], reverse=True)[:3]
-
-    return results
+    return sorted(results, key=lambda x: x["adx"], reverse=True)[:3]
 
 
 # --------------------------------------------------
-# BALANCE
-# --------------------------------------------------
-
-@router.get("/balance")
-def balance():
-    kite = get_kite()
-    margins = kite.margins()["equity"]
-
-    return {
-        "available_cash": margins["available"]["cash"],
-        "total_balance": margins["net"]
-    }
-
-
-# --------------------------------------------------
-# PLACE ORDER
+# PLACE ORDER (CNC for Swing Trading)
 # --------------------------------------------------
 
 @router.post("/order")
 def place_order(payload: dict):
-
-    # 🔒 VALIDATION
     required_fields = ["symbol", "quantity", "min_price", "max_price"]
     if not all(k in payload for k in required_fields):
-        return JSONResponse(
-            status_code=400,
-            content={"reason": "Invalid payload"}
-        )
+        return JSONResponse(status_code=400, content={"reason": "Invalid payload"})
 
     symbol = payload["symbol"]
     quantity = int(payload["quantity"])
-    min_price = float(payload["min_price"])
-    max_price = float(payload["max_price"])
+    min_price, max_price = float(payload["min_price"]), float(payload["max_price"])
     side = payload.get("side", "BUY")
 
     try:
         current_price = get_ltp(symbol)
-    except Exception as e:
-        return JSONResponse(
-            status_code=400,
-            content={"reason": f"LTP error: {str(e)}"}
-        )
+        if not (min_price <= current_price <= max_price):
+            return {"status": "REJECTED", "reason": "Price out of allowed range"}
 
-    # 🔒 PRICE CHECK
-    if not (min_price <= current_price <= max_price):
-        return {
-            "status": "REJECTED",
-            "reason": "Price out of allowed range",
-            "current_price": current_price
-        }
-
-    # 🔥 ORDER EXECUTION
-    try:
         result = place_trade(symbol, quantity, side)
+
+        if side.upper() == "BUY":
+            # entry_date allows the bot to count days held
+            ACTIVE_TRADES[symbol] = {
+                "entry_price": current_price,
+                "quantity": quantity,
+                "entry_date": datetime.now(), 
+                "sold": False
+            }
+        return result
     except Exception as e:
-        return JSONResponse(
-            status_code=400,
-            content={"reason": str(e)}
-        )
-
-    # SAVE TRADE
-    if side.upper() == "BUY":
-        ACTIVE_TRADES[symbol] = {
-            "entry_price": current_price,
-            "quantity": quantity,
-            "sold": False
-        }
-
-    return result
+        return JSONResponse(status_code=400, content={"reason": str(e)})
 
 
 # --------------------------------------------------
-# AUTO SELL
+# AUTO SELL (Price Targets + Time-Based Exit)
 # --------------------------------------------------
 
 @router.get("/auto-sell")
 def auto_sell():
     results = []
+    MAX_HOLDING_DAYS = 6  # Time-based exit for swing trading
 
     for symbol, trade in list(ACTIVE_TRADES.items()):
-
-        if trade.get("sold"):
-            continue
+        if trade.get("sold"): continue
 
         try:
             current_price = get_ltp(symbol)
-        except Exception:
-            continue
+            entry_price = trade["entry_price"]
+            change = (current_price - entry_price) / entry_price * 100
+            
+            # Days calculation
+            days_held = (datetime.now() - trade["entry_date"]).days
 
-        entry_price = trade["entry_price"]
-        change = (current_price - entry_price) / entry_price * 100
+            reason = None
+            
+            # 1. Take Profit (10%)
+            if change >= 10:
+                reason = "TARGET HIT"
+            # 2. Stop Loss (5%)
+            elif change <= -5:
+                reason = "STOPLOSS HIT"
+            # 3. Time-based Exit (Swing duration complete)
+            elif days_held >= MAX_HOLDING_DAYS:
+                reason = f"TIME LIMIT REACHED ({MAX_HOLDING_DAYS} Days)"
 
-        if change >= 4:
-            reason = "TARGET HIT"
-        elif change <= -2:
-            reason = "STOPLOSS HIT"
-        else:
-            continue
-
-        try:
-            place_trade(symbol, trade["quantity"], "SELL")
+            if reason:
+                place_trade(symbol, trade["quantity"], "SELL")
+                results.append({
+                    "symbol": symbol,
+                    "exit_price": round(current_price, 2),
+                    "reason": reason,
+                    "days_held": days_held
+                })
+                trade["sold"] = True
+                del ACTIVE_TRADES[symbol]
+                
         except Exception as e:
-            print("Sell failed:", e)
+            print(f"Auto-sell failed for {symbol}: {e}")
             continue
-
-        results.append({
-            "symbol": symbol,
-            "exit_price": round(current_price, 2),
-            "reason": reason
-        })
-
-        trade["sold"] = True
-        del ACTIVE_TRADES[symbol]
 
     return results
 
 
 # --------------------------------------------------
-# TRADES
+# ACTIVE TRADES (Frontend Endpoint)
 # --------------------------------------------------
 
 @router.get("/trades")
 def get_trades():
     results = []
-
     for symbol, trade in ACTIVE_TRADES.items():
         try:
             current_price = get_ltp(symbol)
-        except Exception:
-            continue
-
-        entry_price = trade["entry_price"]
-        qty = trade["quantity"]
-
-        pnl = ((current_price - entry_price) / entry_price) * 100
-
-        results.append({
-            "symbol": symbol,
-            "entry_price": round(entry_price, 2),
-            "current_price": round(current_price, 2),
-            "quantity": qty,
-            "pnl": round(pnl, 2)
-        })
-
+            days_held = (datetime.now() - trade["entry_date"]).days
+            pnl = ((current_price - trade["entry_price"]) / trade["entry_price"]) * 100
+            
+            results.append({
+                "symbol": symbol,
+                "entry_price": round(trade["entry_price"], 2),
+                "current_price": round(current_price, 2),
+                "quantity": trade["quantity"],
+                "days_held": days_held,
+                "pnl": round(pnl, 2)
+            })
+        except: continue
     return results
 
 
@@ -258,32 +204,19 @@ def get_trades():
 # HELPERS
 # --------------------------------------------------
 
-def get_ltp(symbol: str):
-    kite = get_kite()
-    ltp_data = kite.ltp([f"NSE:{symbol}"])
-    return ltp_data[f"NSE:{symbol}"]["last_price"]
-
-
 def place_trade(symbol: str, quantity: int, side: str):
     kite = get_kite()
+    t_type = kite.TRANSACTION_TYPE_BUY if side.upper() == "BUY" else kite.TRANSACTION_TYPE_SELL
 
-    transaction_type = (
-        kite.TRANSACTION_TYPE_BUY
-        if side.upper() == "BUY"
-        else kite.TRANSACTION_TYPE_SELL
-    )
-
+    # Using PRODUCT_CNC to allow overnight holding
     order_id = kite.place_order(
         variety=kite.VARIETY_REGULAR,
         exchange=kite.EXCHANGE_NSE,
         tradingsymbol=symbol,
-        transaction_type=transaction_type,
+        transaction_type=t_type,
         quantity=quantity,
         order_type=kite.ORDER_TYPE_MARKET,
-        product=kite.PRODUCT_MIS   # 🔥 FIXED HERE
+        product=kite.PRODUCT_CNC  
     )
 
-    return {
-        "status": f"{side.upper()}_ORDER_PLACED",
-        "order_id": order_id
-    }
+    return {"status": f"{side.upper()}_ORDER_PLACED", "order_id": order_id}

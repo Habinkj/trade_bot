@@ -1,20 +1,20 @@
 import pandas as pd
 import numpy as np
 
-# ATR (Average True Range) using Wilder's Smoothing to match TradingView
+# ATR (Average True Range) using Wilder's Smoothing
 def calculate_atr(df, period=14):
     high_low = df["high"] - df["low"]
     high_close = (df["high"] - df["close"].shift(1)).abs()
     low_close = (df["low"] - df["close"].shift(1)).abs()
 
     tr = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
-    # Wilder's smoothing uses alpha = 1/period
+    # Wilder's smoothing alpha = 1/period
     atr = tr.ewm(alpha=1/period, adjust=False).mean()
 
     return atr
 
 
-# ADX (Average Directional Movement Index) - TradingView Compatible Version
+# ADX (Average Directional Movement Index) - TradingView Precise Version
 def calculate_adx(df, period=14):
     df = df.copy()
     alpha = 1 / period
@@ -62,28 +62,20 @@ def ema_crossover(df, fast=9, slow=21):
     df["ema_fast"] = ema(df["close"], fast)
     df["ema_slow"] = ema(df["close"], slow)
 
-    # Check for sufficient data
     if len(df) < 2:
         return "HOLD"
 
-    # Previous candle
     prev_fast = df["ema_fast"].iloc[-2]
     prev_slow = df["ema_slow"].iloc[-2]
-
-    # Current candle
     curr_fast = df["ema_fast"].iloc[-1]
     curr_slow = df["ema_slow"].iloc[-1]
 
-    # BUY signal → Fast EMA crosses above Slow EMA
     if prev_fast < prev_slow and curr_fast > curr_slow:
         return "BUY"
-
-    # SELL signal → Fast EMA crosses below Slow EMA
     if prev_fast > prev_slow and curr_fast < curr_slow:
         return "SELL"
 
     return "HOLD"
-
 
 def ema_fast_signal(df):
     df["ema5"] = ema(df["close"], 5)
@@ -97,15 +89,8 @@ def ema_fast_signal(df):
         return "HOLD"
     
 def calculate_supertrend(df, period=10, multiplier=3):
-    """
-    Improved Supertrend logic (Standard version)
-    """
     df = df.copy()
     hl2 = (df["high"] + df["low"]) / 2
     atr = calculate_atr(df, period)
-
-    upperband = hl2 + (multiplier * atr)
     lowerband = hl2 - (multiplier * atr)
-    
-    # Returning the lowerband as requested for your current strategy
     return lowerband
