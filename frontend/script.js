@@ -1,4 +1,4 @@
-const API_BASE = "https://trade-bot-hvfi.onrender.com";
+const API_BASE = "http://127.0.0.1:8000";
 
 let CURRENT_BALANCE = 0;
 

@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from kiteconnect import KiteConnect
@@ -152,7 +154,8 @@ def place_order(payload: dict):
         if not (min_price <= current_price <= max_price):
             return {"status": "REJECTED", "reason": "Price out of allowed range"}
 
-        result = place_trade(symbol, quantity, side)
+        # Pass current_price as the limit price to satisfy SEBI/Zerodha rules
+        result = place_trade(symbol, quantity, side, current_price)
 
         if side.upper() == "BUY":
             # Track the entry date for the 6-day rule
@@ -195,7 +198,8 @@ def auto_sell():
                 reason = f"TIME LIMIT REACHED ({MAX_HOLDING_DAYS} Days)"
 
             if reason:
-                place_trade(symbol, trade["quantity"], "SELL")
+                # Sell at current market price using Limit protection
+                place_trade(symbol, trade["quantity"], "SELL", current_price)
                 results.append({
                     "symbol": symbol,
                     "exit_price": round(current_price, 2),
@@ -237,10 +241,11 @@ def get_trades():
     return results
 
 # --------------------------------------------------
-# HELPERS
+# HELPERS (Core Execution)
 # --------------------------------------------------
 
-def place_trade(symbol: str, quantity: int, side: str):
+def place_trade(symbol: str, quantity: int, side: str, price: float):
+    """Executes a trade using Limit Order for price protection"""
     kite = get_kite()
     transaction_type = (
         kite.TRANSACTION_TYPE_BUY if side.upper() == "BUY" 
@@ -254,7 +259,8 @@ def place_trade(symbol: str, quantity: int, side: str):
         tradingsymbol=symbol,
         transaction_type=transaction_type,
         quantity=quantity,
-        order_type=kite.ORDER_TYPE_MARKET,
+        order_type=kite.ORDER_TYPE_LIMIT,  # Using LIMIT to bypass MARKET restriction
+        price=price,                       # Injecting current LTP as limit price
         product=kite.PRODUCT_CNC  
     )
     return {"status": f"{side.upper()}_ORDER_PLACED", "order_id": order_id}
