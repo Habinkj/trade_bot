@@ -31,32 +31,64 @@ body {
     max-width: 1400px;
     margin: 30px auto;
     padding: 0 30px;
-
     display: grid;
-    grid-template-columns: 1fr 2fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr; 
+    grid-template-rows: auto auto; 
     gap: 25px;
 }
 
-/* ---------- CARDS ---------- */
+/* ---------- EXACT POSITIONING ---------- */
+
+/* Row 1 */
+.card.balance { grid-column: 1; grid-row: 1; }
+.card.scan    { grid-column: 2; grid-row: 1; }
+.card.trades  { grid-column: 3; grid-row: 1; }
+
+/* Row 2 */
+.card.order {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+}
+
+.card.history {
+    grid-column: 2 / span 2; 
+    grid-row: 2;
+    align-self: start;
+}
+
+/* ---------- CARD STYLING & SCROLL FIX ---------- */
 .card {
     background: #ffffff;
     border: 1px solid #bcccdc;
     border-radius: 10px;
     padding: 20px;
+    height: auto; 
+    box-sizing: border-box;
+    overflow: hidden; /* Prevents card from breaking */
 }
 
-/* Place order full width */
-.place-order {
-    grid-column: span 3;
+/* 🔥 FIX: Market Scan Scrollbar */
+.card.scan {
+    max-height: 500px; /* Limits the height of the scan list */
+    overflow-y: auto;  /* Adds vertical scrollbar */
 }
 
-/* ---------- HEADINGS ---------- */
+/* Custom scrollbar for better look */
+.card.scan::-webkit-scrollbar {
+    width: 6px;
+}
+.card.scan::-webkit-scrollbar-thumb {
+    background: #bcccdc;
+    border-radius: 10px;
+}
+
+/* ---------- HEADINGS & BUTTONS ---------- */
 .card h2 {
     margin-top: 0;
     font-size: 18px;
 }
 
-/* ---------- BUTTONS ---------- */
 button {
     width: 100%;
     padding: 10px;
@@ -67,27 +99,12 @@ button {
     cursor: pointer;
 }
 
-button:hover {
-    background: #bcccdc;
-}
-
-/* ---------- INPUTS ---------- */
 input, select {
     width: 100%;
     padding: 10px;
     margin-top: 10px;
     border: 1px solid #9aa6b2;
     border-radius: 6px;
-}
-
-/* ---------- ROW INPUTS ---------- */
-.row {
-    display: flex;
-    gap: 10px;
-}
-
-.row input {
-    flex: 1;
 }
 
 /* ---------- TABLE ---------- */
@@ -102,6 +119,8 @@ th {
     padding: 10px;
     text-align: left;
     font-size: 14px;
+    position: sticky; /* Keeps headers visible while scrolling */
+    top: -20px;
 }
 
 td {
@@ -111,36 +130,6 @@ td {
 }
 
 /* ---------- COLORS ---------- */
-.green {
-    color: green;
-    font-weight: bold;
-}
-
-.red {
-    color: red;
-    font-weight: bold;
-}
-
-/* ---------- BALANCE ---------- */
-.balance {
-    font-size: 24px;
-    margin: 10px 0;
-}
-
-/* ---------- WARNING ---------- */
-.warning {
-    font-size: 12px;
-    color: #64748b;
-    margin-top: 10px;
-}
-
-/* ---------- RESPONSIVE (only fallback) ---------- */
-@media (max-width: 1000px) {
-    .dashboard {
-        grid-template-columns: 1fr;
-    }
-
-    .place-order {
-        grid-column: span 1;
-    }
-}
+.green { color: green; font-weight: bold; }
+.red { color: red; font-weight: bold; }
+.balance { font-size: 24px; margin: 10px 0; font-weight: bold; }

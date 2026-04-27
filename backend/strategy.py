@@ -1,144 +1,64 @@
 import pandas as pd
-from backend.indicators import calculate_adx
 from backend.indicators import calculate_supertrend
 
-def sma_dynamic_signal(df, fast: int, slow: int):
-    # create moving averages
-    df["fast_sma"] = df["close"].rolling(fast).mean()
-    df["slow_sma"] = df["close"].rolling(slow).mean()
-
-    # previous values
-    prev_fast = df["fast_sma"].iloc[-2]
-    prev_slow = df["slow_sma"].iloc[-2]
-
-    # current values
-    curr_fast = df["fast_sma"].iloc[-1]
-    curr_slow = df["slow_sma"].iloc[-1]
-
-    # crossover logic
-    bullish_cross = prev_fast <= prev_slow and curr_fast > curr_slow
-    bearish_cross = prev_fast >= prev_slow and curr_fast < curr_slow
-
-    if bullish_cross:
+def sma_dynamic_signal(df, fast_period, slow_period):
+    """
+    Calculates SMA crossover using user-defined periods.
+    """
+    df["sma_fast"] = df["close"].rolling(fast_period).mean()
+    df["sma_slow"] = df["close"].rolling(slow_period).mean()
+    
+    if len(df) < slow_period: return "WAIT"
+    
+    curr_fast, prev_fast = df["sma_fast"].iloc[-1], df["sma_fast"].iloc[-2]
+    curr_slow, prev_slow = df["sma_slow"].iloc[-1], df["sma_slow"].iloc[-2]
+    
+    # Logic for exact crossover point
+    if prev_fast <= prev_slow and curr_fast > curr_slow:
         return "BUY"
-    elif bearish_cross:
+    elif prev_fast >= prev_slow and curr_fast < curr_slow:
         return "SELL"
-    else:
-        return "HOLD"
+    
+    # Shows the current relative position for the demo
+    current_trend = "Up" if curr_fast > curr_slow else "Down"
+    return f"HOLD ({current_trend})"
 
-# -------- SMA (5,10) --------
-def sma_5_10_signal(df):
-    df["sma_5"] = df["close"].rolling(5).mean()
-    df["sma_10"] = df["close"].rolling(10).mean()
-
-    adx = calculate_adx(df)
-    latest_adx = adx.iloc[-1]
-
-    prev_fast = df["sma_5"].iloc[-2]
-    prev_slow = df["sma_10"].iloc[-2]
-    curr_fast = df["sma_5"].iloc[-1]
-    curr_slow = df["sma_10"].iloc[-1]
-
-    bullish_cross = prev_fast <= prev_slow and curr_fast > curr_slow
-    bearish_cross = prev_fast >= prev_slow and curr_fast < curr_slow
-
-    strong_trend = latest_adx > 25
-
-    if bullish_cross and strong_trend:
+def ema_cross_signal(df, fast_period, slow_period):
+    """
+    Calculates EMA crossover using user-defined periods.
+    """
+    df["ema_fast"] = df["close"].ewm(span=fast_period, adjust=False).mean()
+    df["ema_slow"] = df["close"].ewm(span=slow_period, adjust=False).mean()
+    
+    if len(df) < slow_period: return "WAIT"
+    
+    curr_f, prev_f = df["ema_fast"].iloc[-1], df["ema_fast"].iloc[-2]
+    curr_s, prev_s = df["ema_slow"].iloc[-1], df["ema_slow"].iloc[-2]
+    
+    if prev_f <= prev_s and curr_f > curr_s:
         return "BUY"
-
-    if bearish_cross and strong_trend:
+    elif prev_f >= prev_s and curr_f < curr_s:
         return "SELL"
+    
+    current_trend = "Up" if curr_f > curr_s else "Down"
+    return f"HOLD ({current_trend})"
 
-    return "HOLD"
-
-# -------- SMA (9,21) --------
-def sma_9_21_signal(df):
-    df["sma_9"] = df["close"].rolling(9).mean()
-    df["sma_21"] = df["close"].rolling(21).mean()
-
-    adx = calculate_adx(df)
-    latest_adx = adx.iloc[-1]
-
-    prev_fast = df["sma_9"].iloc[-2]
-    prev_slow = df["sma_21"].iloc[-2]
-    curr_fast = df["sma_9"].iloc[-1]
-    curr_slow = df["sma_21"].iloc[-1]
-
-    bullish_cross = prev_fast <= prev_slow and curr_fast > curr_slow
-    bearish_cross = prev_fast >= prev_slow and curr_fast < curr_slow
-
-    strong_trend = latest_adx > 25
-
-    if bullish_cross and strong_trend:
+def supertrend_signal(df, period, multiplier):
+    """
+    FIXED: Uses 'ST_Trend' keyword and shows active trend state.
+    """
+    # st_df now contains the 'ST_Trend' column created in indicators.py
+    st_df = calculate_supertrend(df, period=period, multiplier=multiplier)
+    
+    curr_st = st_df["ST_Trend"].iloc[-1]
+    prev_st = st_df["ST_Trend"].iloc[-2]
+    
+    # 1. Check for the 'FLIP' (The best entry point)
+    if prev_st == "Down" and curr_st == "Up":
         return "BUY"
-
-    if bearish_cross and strong_trend:
+    elif prev_st == "Up" and curr_st == "Down":
         return "SELL"
-
-    return "HOLD"
-
-
-# -------- SMA (15,20) --------
-def sma_15_20_signal(df):
-    df["sma_15"] = df["close"].rolling(15).mean()
-    df["sma_20"] = df["close"].rolling(20).mean()
-
-    adx = calculate_adx(df)
-    latest_adx = adx.iloc[-1]
-
-    prev_fast = df["sma_15"].iloc[-2]
-    prev_slow = df["sma_20"].iloc[-2]
-    curr_fast = df["sma_15"].iloc[-1]
-    curr_slow = df["sma_20"].iloc[-1]
-
-    bullish_cross = prev_fast <= prev_slow and curr_fast > curr_slow
-    bearish_cross = prev_fast >= prev_slow and curr_fast < curr_slow
-
-    strong_trend = latest_adx > 25
-
-    if bullish_cross and strong_trend:
-        return "BUY"
-
-    if bearish_cross and strong_trend:
-        return "SELL"
-
-    return "HOLD"
-
-
-# ---------- EMA CROSSOVER ----------
-def ema_cross_signal(df):
-    df["ema_fast"] = df["close"].ewm(span=9, adjust=False).mean()
-    df["ema_slow"] = df["close"].ewm(span=21, adjust=False).mean()
-    df["ema_trend"] = df["close"].ewm(span=50, adjust=False).mean()
-
-    adx = calculate_adx(df)
-    latest_adx = adx.iloc[-1]
-
-    prev_fast = df["ema_fast"].iloc[-2]
-    prev_slow = df["ema_slow"].iloc[-2]
-
-    curr_fast = df["ema_fast"].iloc[-1]
-    curr_slow = df["ema_slow"].iloc[-1]
-    curr_price = df["close"].iloc[-1]
-    curr_trend = df["ema_trend"].iloc[-1]
-
-    bullish_cross = prev_fast <= prev_slow and curr_fast > curr_slow
-    trend_ok = curr_price > curr_trend
-    strong_trend = latest_adx > 25
-
-    if bullish_cross and trend_ok and strong_trend:
-        return "BUY"
-
-    return "HOLD"
-
-# -------- SUPER TREND ----------
-def supertrend_signal(df):
-    st = calculate_supertrend(df)
-
-    price = df["close"].iloc[-1]
-
-    if price > st.iloc[-1]:
-        return "BUY"
-    else:
-        return "SELL"
+    
+    # 2. If no flip, show the CURRENT trend direction
+    # This ensures your dashboard looks "Alive" during the project demo.
+    return f"HOLD ({curr_st})"

@@ -1,20 +1,9 @@
 {
-    "IDFCFIRSTB": {
-        "entry_price": 67.19,
+    "IOB": {
+        "entry_price": 35.27,
+        "peak_price": 35.49,
         "quantity": 1,
-        "entry_date": "2026-04-16T12:07:53.622223",
-        "sold": false
-    },
-    "IDEA": {
-        "entry_price": 9.62,
-        "quantity": 3,
-        "entry_date": "2026-04-17T09:35:36.864883",
-        "sold": false
-    },
-    "IDBI": {
-        "entry_price": 74.56,
-        "quantity": 1,
-        "entry_date": "2026-04-17T10:44:37.177058",
+        "entry_date": "2026-04-22T11:08:37.860535",
         "sold": false
     }
 }
