@@ -1,173 +1,99 @@
-# 📈 Semi-Automated Trading Bot using Zerodha API
+# 📈 TRADEBOT: An Automated Algorithmic Trading Framework utilizing Multi-Indicator Technical Filters
 
 ## 🔹 Project Overview
-This project is a **semi-automated stock trading application** built using **FastAPI** and **Zerodha Kite API**.  
-The system scans selected stocks using **technical indicators** and generates BUY signals.  
-Trades are executed **only after user approval**, ensuring safety and transparency.
+[cite_start]This project is an **intelligent Human-in-the-Loop (HITL) trading framework** built using **FastAPI** and the **Zerodha Kite API**[cite: 15, 64]. [cite_start]The system performs automated market analysis using multi-indicator technical filters to generate high-probability BUY signals[cite: 16, 37]. 
 
-The goal of this project is **academic learning and system design**, not guaranteed profits.
+[cite_start]To ensure safety, transparency, and ethical compliance, trades are executed **only after explicit user approval**[cite: 17, 21]. [cite_start]The goal of this project is to explore the intersection of **Intelligent Computing and financial risk management**[cite: 15, 33].
 
 ---
 
 ## 🔹 Key Features
-- 🔍 Market scanning using SMA / EMA strategies
-- 📊 Real-time balance fetching from Zerodha
-- ✅ Manual trade approval (Human-in-the-loop)
-- 🔐 Price range validation (Min & Max Buy Price)
-- 💰 Balance validation before placing orders
-- 🌐 Web-based frontend (HTML + JavaScript)
-- 🔗 Real broker integration using Zerodha API
+- [cite_start]🔍 **Intelligent Scanning**: Market analysis using Supertrend and SMA/EMA crossover strategies[cite: 16, 39, 112].
+- [cite_start]🛡️ **Momentum Gatekeeper**: Integrated ADX filter ($>25$) to ensure entries only during strong trends[cite: 55, 113, 132].
+- [cite_start]📊 **Real-time Telemetry**: A responsive CSS Grid dashboard providing live balance and trade updates[cite: 35, 125, 127].
+- [cite_start]✅ **HITL Approval**: Manual verification for all orders to mitigate algorithmic risk[cite: 17, 19, 134].
+- [cite_start]🔐 **Risk Protocols**: Automated 2% trailing stop-loss and 6-day time-exit conditions[cite: 28, 59, 109].
+- [cite_start]💰 **Balance Validation**: Real-time margin checking through the Zerodha Kite Connect bridge[cite: 67, 128].
 
 ---
 
-## 🔹 Why Semi-Automated?
-- Fully automated bots are risky and unsafe
-- Human approval prevents emotional and blind trading
-- Academically ethical and review-safe design
+## 🔹 Why Human-in-the-Loop (HITL)?
+- [cite_start]Fully automated systems can lead to significant capital erosion due to "black-box" failures[cite: 20, 23, 34].
+- [cite_start]Human approval acts as a psychological safety net, preventing emotional or blind trading[cite: 24, 29].
+- [cite_start]The "Glass Box" design allows users to monitor and intervene during anomalous market events[cite: 35, 134].
 
 ---
 
 ## 🔹 System Architecture
-User (Browser)
-     ↓
-Frontend (HTML + JS)
-     ↓
-FastAPI Backend
-     ↓
-Strategy Engine
-     ↓
-Zerodha Kite API
-     ↓
-Live Market & Orders
+**User (Browser)**      ↓  
+[cite_start]**Frontend (Vanilla JS + CSS Grid)** — *10s Telemetry Refresh* [cite: 125, 127]  
+     ↓  
+[cite_start]**FastAPI Backend** — *Asynchronous Middleware* [cite: 70, 71]  
+     ↓  
+[cite_start]**Strategy Engine** — *Supertrend + ADX Gatekeeper* [cite: 37, 56]  
+     ↓  
+[cite_start]**Zerodha Kite API** — *OAuth 2.0 Secure Bridge* [cite: 67, 68]  
+     ↓  
+**Live Market & Orders**
 
 ---
 
 ## 🔹 Technology Stack
 | Layer | Technology |
 |------|-----------|
-| Backend | Python, FastAPI |
-| Broker API | Zerodha KiteConnect |
-| Frontend | HTML, CSS, JavaScript |
-| Server | Uvicorn |
-| Indicators | SMA, EMA |
+| **Backend** | [cite_start]Python, FastAPI [cite: 16, 70] |
+| **Broker API** | [cite_start]Zerodha KiteConnect [cite: 16, 67] |
+| **Frontend** | [cite_start]HTML, CSS Grid, JavaScript [cite: 125, 127] |
+| **Persistence** | [cite_start]JSON State Management [cite: 16, 75] |
+| **Indicators** | [cite_start]Supertrend, ADX, ATR, SMA [cite: 16, 39, 53] |
 
 ---
 
 ## 🔹 Trading Strategies Used
-- SMA 5–10 crossover
-- SMA 9–21 crossover
-- SMA 15–20 crossover
-- EMA crossover
-
-These strategies generate **BUY signals** based on trend direction.
+- [cite_start]**Supertrend Breakout**: Primary trend-detection engine[cite: 39, 40].
+- [cite_start]**ADX Filter**: Trend strength gatekeeper set at a threshold of $>25$[cite: 55, 56].
+- [cite_start]**SMA/EMA Crossover**: Multi-period trend following[cite: 37, 112].
+- [cite_start]**Trailing Stop-Loss**: Dynamic 2% safety net tracking peak prices ($P_{max}$)[cite: 28, 59, 60].
 
 ---
 
 ## 🔹 How the System Works
-1. User logs in using Zerodha
-2. System fetches historical market data
-3. Technical strategy is applied
-4. BUY signals are generated
-5. User enters:
-   - Quantity
-   - Minimum Buy Price
-   - Maximum Buy Price
-6. System validates:
-   - Available balance
-   - Price range
-7. Order is placed through Zerodha API
+1. [cite_start]**Authentication**: User logs in via a secure Zerodha OAuth 2.0 handshake[cite: 68].
+2. [cite_start]**Scan**: System fetches historical daily data and applies technical strategies[cite: 40, 112].
+3. [cite_start]**Filter**: ADX momentum check ensures the market is not "choppy"[cite: 53, 55].
+4. [cite_start]**Approval**: Signals are displayed on the dashboard for user verification[cite: 120, 131].
+5. [cite_start]**Execution**: Upon approval, a Limit Order (CNC) is placed through the Zerodha bridge[cite: 120].
+6. [cite_start]**Management**: Active trades are monitored for trailing stop-loss or 6-day time-exit triggers[cite: 78, 107, 109].
 
 ---
 
 ## 🔹 Safety Mechanisms
-- No automatic trades
-- User approval required
-- Balance check before trade
-- Price range validation
-- No leverage trading
+- [cite_start]**No Black-Box Trading**: Mandatory user confirmation for all buy orders[cite: 19, 34, 134].
+- [cite_start]**Trailing SL**: Automatic capital protection if price drops 2% from its peak[cite: 28, 59, 107].
+- [cite_start]**Time Limit**: Prevents capital stagnation by liquidating positions after 6 days[cite: 28, 79, 109].
+- [cite_start]**Secure Persistence**: Credentials and trade states are stored in encrypted environments and JSON buffers[cite: 68, 75, 76].
 
 ---
 
-## 🔹 Accuracy
-- Expected accuracy: **50–60%**
-- This is realistic for technical indicators
-- Project focuses on **correct methodology**, not exaggerated accuracy
+## 🔹 Accuracy & Performance
+- [cite_start]**Win Rate**: Expected strategy accuracy is approximately **64.2%**[cite: 138].
+- [cite_start]**Benchmark**: Performance is measured against the **NIFTY 50** to ensure realistic risk-adjusted returns[cite: 137, 138].
+- [cite_start]**Focus**: Prioritizes capital preservation and correct methodology over exaggerated profit claims[cite: 17, 30, 139].
 
 ---
 
 ## 🔹 Project Structure
-
 ```text
 trade_bot/
 ├── backend/
-│   ├── main.py
-│   ├── api.py
-│   ├── strategy.py
-│   ├── zerodha_session.py
-│   ├── data_provider.py
-│   └── config_loader.py
+│   ├── api.py           # FastAPI endpoints & HITL logic
+│   ├── strategy.py      # Core signal generation
+│   ├── indicators.py    # Math derivations (ADX, ATR)
+│   ├── zerodha_session.py # OAuth & Session handlers
+│   └── data/            # Persistence (active_trades.json)
 ├── frontend/
-│   ├── index.html
-│   ├── script.js
-│   └── style.css
-├── config/
-│   └── watchlist.json
-├── logs/
-├── requirements.txt
+│   ├── index.html       # Telemetry Dashboard
+│   ├── script.js        # Polling & UI Logic
+│   └── style.css        # CSS Grid Layout
+├── requirements.txt     # Dependencies
 └── README.md
-```
----
-
-## 🔹 How to Run the Project
-
-### 1️⃣ Install Dependencies
-```bash
-pip install -r requirements.txt
-```
-### 2️⃣ Set Environment Variables
-```
-KITE_API_KEY=your_api_key
-KITE_API_SECRET=your_api_secret
-```
-
-### 3️⃣ Start Backend Server
-```
-python -m uvicorn backend.main:app --reload
-```
-
-### 4️⃣ Open Frontend
-```
-Open frontend/index.html in your browser.
-```
----
-## 🔹 Limitations
-	•	No auto-sell logic yet
-	•	SMA/EMA do not work well in sideways markets
-	•	Requires Zerodha login session
-	•	Intraday only (no long-term strategies)
----
-⸻
-
-## 🔹 Future Enhancements
-	•	Auto sell with stop-loss & target
-	•	Trailing stop-loss
-	•	Volatility filter (ATR)
-	•	Trend strength filter (ADX)
-	•	Multi-stock portfolio support
-	•	Advanced charts and analytics
----
-⸻
-
-## 🔹 Academic Declaration
-
-This project is developed for educational purposes only.
-It does not guarantee profits and follows ethical trading practices.
----
-⸻
-
-## 🔹 References
-	•	Zerodha Kite API Documentation
-	•	FastAPI Documentation
-	•	Technical Analysis of Financial Markets – John J. Murphy
-
----
