@@ -97,6 +97,11 @@ button {
     border: 1px solid #9aa6b2;
     border-radius: 6px;
     cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #c5def8;
 }
 
 input, select {
@@ -105,6 +110,7 @@ input, select {
     margin-top: 10px;
     border: 1px solid #9aa6b2;
     border-radius: 6px;
+    box-sizing: border-box;
 }
 
 /* ---------- TABLE ---------- */
@@ -133,3 +139,92 @@ td {
 .green { color: green; font-weight: bold; }
 .red { color: red; font-weight: bold; }
 .balance { font-size: 24px; margin: 10px 0; font-weight: bold; }
+
+
+/* =========================================
+   NEW: SUPER SCANNER UI COMPONENTS
+   ========================================= */
+
+.active-engine-box {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 15px;
+}
+
+.engine-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.engine-status {
+    font-size: 10px;
+    color: #16a34a;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.engine-title {
+    margin: 4px 0 2px 0;
+    font-size: 16px;
+}
+
+.engine-subtitle {
+    margin: 0;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.settings-btn {
+    cursor: pointer;
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 16px;
+    width: auto;
+    margin-top: 0;
+    transition: transform 0.2s ease;
+}
+
+.settings-btn:hover {
+    transform: rotate(45deg);
+    background: #e2e8f0;
+}
+
+.advanced-settings-panel {
+    background: #f1f5f9;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    border: 1px dashed #94a3b8;
+    display: none; /* Hidden by default */
+}
+
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    align-items: center;
+}
+
+.setting-row label {
+    font-size: 11px;
+    font-weight: bold;
+    color: #475569;
+}
+
+.setting-row .input-group {
+    display: flex;
+    gap: 5px;
+}
+
+.setting-row input {
+    width: 55px;
+    padding: 4px;
+    margin-top: 0;
+    text-align: center;
+}

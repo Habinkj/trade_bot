@@ -1,9 +1,16 @@
 {
     "IOB": {
         "entry_price": 35.27,
-        "peak_price": 35.49,
+        "peak_price": 35.66,
         "quantity": 1,
         "entry_date": "2026-04-22T11:08:37.860535",
+        "sold": false
+    },
+    "SUZLON": {
+        "entry_price": 57.28,
+        "peak_price": 57.99,
+        "quantity": 2,
+        "entry_date": "2026-04-28T15:19:02.718994",
         "sold": false
     }
 }

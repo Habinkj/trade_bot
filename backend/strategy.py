@@ -1,64 +1,55 @@
 import pandas as pd
-from backend.indicators import calculate_supertrend
+from backend.indicators import calculate_supertrend, calculate_adx, calculate_rsi
 
-def sma_dynamic_signal(df, fast_period, slow_period):
+def dual_path_signal(df, st_p=10, st_m=3.0, ema_f=9, ema_s=21, adx_min=25.0, rsi_bounce=40.0):
     """
-    Calculates SMA crossover using user-defined periods.
+    Strict Confluence Framework: ALL conditions must be met to trigger a BUY.
+    No more loopholes or bypass paths.
     """
-    df["sma_fast"] = df["close"].rolling(fast_period).mean()
-    df["sma_slow"] = df["close"].rolling(slow_period).mean()
-    
-    if len(df) < slow_period: return "WAIT"
-    
-    curr_fast, prev_fast = df["sma_fast"].iloc[-1], df["sma_fast"].iloc[-2]
-    curr_slow, prev_slow = df["sma_slow"].iloc[-1], df["sma_slow"].iloc[-2]
-    
-    # Logic for exact crossover point
-    if prev_fast <= prev_slow and curr_fast > curr_slow:
-        return "BUY"
-    elif prev_fast >= prev_slow and curr_fast < curr_slow:
-        return "SELL"
-    
-    # Shows the current relative position for the demo
-    current_trend = "Up" if curr_fast > curr_slow else "Down"
-    return f"HOLD ({current_trend})"
+    if len(df) < max(ema_s, st_p, 14) + 2:
+        return "HOLD", 0.0
 
-def ema_cross_signal(df, fast_period, slow_period):
-    """
-    Calculates EMA crossover using user-defined periods.
-    """
-    df["ema_fast"] = df["close"].ewm(span=fast_period, adjust=False).mean()
-    df["ema_slow"] = df["close"].ewm(span=slow_period, adjust=False).mean()
+    # 1. Generate Indicators
+    df["ema_fast"] = df["close"].ewm(span=ema_f, adjust=False).mean()
+    df["ema_slow"] = df["close"].ewm(span=ema_s, adjust=False).mean()
     
-    if len(df) < slow_period: return "WAIT"
-    
-    curr_f, prev_f = df["ema_fast"].iloc[-1], df["ema_fast"].iloc[-2]
-    curr_s, prev_s = df["ema_slow"].iloc[-1], df["ema_slow"].iloc[-2]
-    
-    if prev_f <= prev_s and curr_f > curr_s:
-        return "BUY"
-    elif prev_f >= prev_s and curr_f < curr_s:
-        return "SELL"
-    
-    current_trend = "Up" if curr_f > curr_s else "Down"
-    return f"HOLD ({current_trend})"
+    adx_series = calculate_adx(df, period=14) 
+    st_series = calculate_supertrend(df, period=st_p, multiplier=st_m)
+    rsi_series = calculate_rsi(df, period=14)
 
-def supertrend_signal(df, period, multiplier):
-    """
-    FIXED: Uses 'ST_Trend' keyword and shows active trend state.
-    """
-    # st_df now contains the 'ST_Trend' column created in indicators.py
-    st_df = calculate_supertrend(df, period=period, multiplier=multiplier)
+    curr_close = df["close"].iloc[-1]
+    curr_ema_fast = df["ema_fast"].iloc[-1]
+    curr_ema_slow = df["ema_slow"].iloc[-1]
+    curr_adx = adx_series.iloc[-1]
+    curr_rsi = rsi_series.iloc[-1]
+    curr_st = st_series.iloc[-1]
+
+    # ==========================================
+    # 🛡️ STRICT CONFLUENCE BUY LOGIC
+    # ==========================================
     
-    curr_st = st_df["ST_Trend"].iloc[-1]
-    prev_st = st_df["ST_Trend"].iloc[-2]
+    # Condition 1: Supertrend must be GREEN (Price > Supertrend)
+    supertrend_green = curr_close > curr_st 
     
-    # 1. Check for the 'FLIP' (The best entry point)
-    if prev_st == "Down" and curr_st == "Up":
-        return "BUY"
-    elif prev_st == "Up" and curr_st == "Down":
-        return "SELL"
+    # Condition 2: EMA must be Bullish (Fast > Slow)
+    ema_bullish = curr_ema_fast > curr_ema_slow
     
-    # 2. If no flip, show the CURRENT trend direction
-    # This ensures your dashboard looks "Alive" during the project demo.
-    return f"HOLD ({curr_st})"
+    # Condition 3: ADX must show strong trend
+    adx_strong = curr_adx >= adx_min
+    
+    # Condition 4: RSI must show momentum
+    rsi_strong = curr_rsi >= rsi_bounce
+
+    # ALL 4 gates must open to trigger the BUY
+    if supertrend_green and ema_bullish and adx_strong and rsi_strong:
+        return "BUY", curr_adx
+
+    # ==========================================
+    # 🚨 SELL LOGIC (Risk Exit)
+    # ==========================================
+    
+    # Immediate exit if the floor drops out
+    if curr_close < curr_st:
+        return "SELL", curr_adx
+
+    return "HOLD", curr_adx

@@ -1,69 +1,94 @@
 import pandas as pd
 import numpy as np
 
-# --------------------------------------------------
-# ATR (Average True Range) - Wilder's Smoothing
-# --------------------------------------------------
-def calculate_atr(df, period=14):
-    high_low = df["high"] - df["low"]
-    high_close = (df["high"] - df["close"].shift(1)).abs()
-    low_close = (df["low"] - df["close"].shift(1)).abs()
-    tr = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
+def calculate_supertrend(df, period=10, multiplier=3.0):
+    """Calculates Supertrend matching TradingView logic perfectly."""
+    high = df['high']
+    low = df['low']
+    close = df['close']
+    
+    # Calculate True Range
+    tr1 = high - low
+    tr2 = abs(high - close.shift(1))
+    tr3 = abs(low - close.shift(1))
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+    
+    # Calculate ATR (Wilder's Smoothing)
     atr = tr.ewm(alpha=1/period, adjust=False).mean()
-    return atr
+    
+    # Calculate Basic Bands
+    hl2 = (high + low) / 2
+    basic_upper = hl2 + (multiplier * atr)
+    basic_lower = hl2 - (multiplier * atr)
+    
+    # Initialize Final Bands
+    final_upper = basic_upper.copy()
+    final_lower = basic_lower.copy()
+    supertrend = pd.Series(index=df.index, dtype='float64')
+    
+    for i in range(1, len(df)):
+        # Final Upper Band (Hold Down Logic)
+        if basic_upper.iloc[i] < final_upper.iloc[i-1] or close.iloc[i-1] > final_upper.iloc[i-1]:
+            final_upper.iloc[i] = basic_upper.iloc[i]
+        else:
+            final_upper.iloc[i] = final_upper.iloc[i-1]
+            
+        # Final Lower Band (Hold Up Logic)
+        if basic_lower.iloc[i] > final_lower.iloc[i-1] or close.iloc[i-1] < final_lower.iloc[i-1]:
+            final_lower.iloc[i] = basic_lower.iloc[i]
+        else:
+            final_lower.iloc[i] = final_lower.iloc[i-1]
+            
+        # Supertrend State
+        if i == 1:
+            supertrend.iloc[i] = final_upper.iloc[i]
+        elif supertrend.iloc[i-1] == final_upper.iloc[i-1] and close.iloc[i] <= final_upper.iloc[i]:
+            supertrend.iloc[i] = final_upper.iloc[i]
+        elif supertrend.iloc[i-1] == final_upper.iloc[i-1] and close.iloc[i] > final_upper.iloc[i]:
+            supertrend.iloc[i] = final_lower.iloc[i]
+        elif supertrend.iloc[i-1] == final_lower.iloc[i-1] and close.iloc[i] >= final_lower.iloc[i]:
+            supertrend.iloc[i] = final_lower.iloc[i]
+        elif supertrend.iloc[i-1] == final_lower.iloc[i-1] and close.iloc[i] < final_lower.iloc[i]:
+            supertrend.iloc[i] = final_upper.iloc[i]
 
-# --------------------------------------------------
-# ADX (Average Directional Index) - Precise Version
-# --------------------------------------------------
+    return supertrend
+
 def calculate_adx(df, period=14):
-    df = df.copy()
-    alpha = 1 / period
-    tr1 = df["high"] - df["low"]
-    tr2 = (df["high"] - df["close"].shift(1)).abs()
-    tr3 = (df["low"] - df["close"].shift(1)).abs()
-    df["TR"] = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-    df["up_move"] = df["high"] - df["high"].shift(1)
-    df["down_move"] = df["low"].shift(1) - df["low"]
-    df["+DM"] = np.where((df["up_move"] > df["down_move"]) & (df["up_move"] > 0), df["up_move"], 0.0)
-    df["-DM"] = np.where((df["down_move"] > df["up_move"]) & (df["down_move"] > 0), df["down_move"], 0.0)
-    smooth_tr = df["TR"].ewm(alpha=alpha, adjust=False).mean()
-    smooth_plus_dm = df["+DM"].ewm(alpha=alpha, adjust=False).mean()
-    smooth_minus_dm = df["-DM"].ewm(alpha=alpha, adjust=False).mean()
-    df["+DI"] = 100 * (smooth_plus_dm / smooth_tr)
-    df["-DI"] = 100 * (smooth_minus_dm / smooth_tr)
-    df["DX"] = 100 * (abs(df["+DI"] - df["-DI"]) / (df["+DI"] + df["-DI"]))
-    adx = df["DX"].ewm(alpha=alpha, adjust=False).mean()
+    """Calculates ADX using precise TradingView RMA smoothing."""
+    up_move = df['high'] - df['high'].shift(1)
+    down_move = df['low'].shift(1) - df['low']
+    
+    # Precise Directional Movement
+    plus_dm = np.where((up_move > down_move) & (up_move > 0), up_move, 0.0)
+    minus_dm = np.where((down_move > up_move) & (down_move > 0), down_move, 0.0)
+    
+    # True Range
+    tr1 = df['high'] - df['low']
+    tr2 = abs(df['high'] - df['close'].shift(1))
+    tr3 = abs(df['low'] - df['close'].shift(1))
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+    
+    # Wilder's Smoothing (RMA)
+    atr = tr.ewm(alpha=1/period, adjust=False).mean()
+    
+    plus_di = 100 * (pd.Series(plus_dm, index=df.index).ewm(alpha=1/period, adjust=False).mean() / atr)
+    minus_di = 100 * (pd.Series(minus_dm, index=df.index).ewm(alpha=1/period, adjust=False).mean() / atr)
+    
+    dx = (abs(plus_di - minus_di) / abs(plus_di + minus_di)) * 100
+    adx = dx.ewm(alpha=1/period, adjust=False).mean()
+    
     return adx
 
-# --------------------------------------------------
-# BASIC INDICATORS (SMA, EMA, SUPERTREND)
-# --------------------------------------------------
-def calculate_sma(df, period):
-    return df["close"].rolling(period).mean()
-
-def calculate_ema(df, period):
-    return df["close"].ewm(span=period, adjust=False).mean()
-
-def calculate_supertrend(df, period=10, multiplier=3):
-    """
-    Calculates Supertrend and creates the ST_Trend keyword.
-    """
-    df = df.copy()
-    atr = calculate_atr(df, period)
-    hl2 = (df["high"] + df["low"]) / 2
+def calculate_rsi(df, period=14):
+    """Calculates RSI using TradingView's Wilder Smoothing (RMA)."""
+    delta = df["close"].diff()
+    up = delta.clip(lower=0)
+    down = -1 * delta.clip(upper=0)
     
-    df["upperband"] = hl2 + (multiplier * atr)
-    df["lowerband"] = hl2 - (multiplier * atr)
-    df["in_uptrend"] = True
-
-    for i in range(1, len(df)):
-        if df["close"].iloc[i] > df["upperband"].iloc[i-1]:
-            df.loc[df.index[i], "in_uptrend"] = True
-        elif df["close"].iloc[i] < df["lowerband"].iloc[i-1]:
-            df.loc[df.index[i], "in_uptrend"] = False
-        else:
-            df.loc[df.index[i], "in_uptrend"] = df.iloc[i-1]["in_uptrend"]
-
-    # This creates the keyword 'ST_Trend' that your strategy expects
-    df["ST_Trend"] = np.where(df["in_uptrend"], "Up", "Down")
-    return df
+    ema_up = up.ewm(alpha=1/period, adjust=False).mean()
+    ema_down = down.ewm(alpha=1/period, adjust=False).mean()
+    
+    rs = ema_up / ema_down
+    rsi = 100 - (100 / (1 + rs))
+    
+    return rsi

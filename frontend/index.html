@@ -14,42 +14,72 @@
 
 <main class="dashboard">
 
-    <!-- BALANCE -->
     <div class="card balance">
         <h2>Account Balance</h2>
         <p class="balance">₹<span id="balanceAmount">0</span></p>
         <button onclick="loadBalance()">Refresh</button>
     </div>
 
-    <!-- MARKET SCAN -->
     <div class="card scan">
-        <h2>Market Scan</h2>
+        <h2 style="margin-bottom: 15px;">Market Scan</h2>
 
-        <select id="strategy">
-            <option value="sma">SMA</option>
-            <option value="ema">EMA</option>
-            <option value="supertrend">Supertrend</option>
-        </select>
+        <div style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px; background: #ffffff;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <p style="color: #16a34a; font-weight: bold; font-size: 12px; margin: 0;">● ACTIVE ENGINE</p>
+                    <h3 style="margin: 5px 0;">🚀 Super Scanner</h3>
+                    <p style="font-size: 12px; color: #64748b; margin: 0 0 15px 0;">Confluence: Supertrend + EMA + RSI + ADX</p>
+                </div>
+                <button onclick="toggleSettings()" class="settings-btn" style="width: auto; margin: 0; padding: 5px 10px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;">⚙️</button>
+            </div>
+            
+            <button id="runScanBtn" onclick="runScan()" style="width: 100%; font-weight: bold; background: #dbeafe; color: #0f172a; border: 1px solid #93c5fd; border-radius: 6px; padding: 10px;">Run Full Scan</button>
+        </div>
 
-        <input type="number" id="fast" value="5">
-        <input type="number" id="slow" value="10">
+        <div id="scanSettingsPanel" style="display: none; margin-top: 15px; padding: 15px; border: 1px dashed #94a3b8; border-radius: 6px; background: #f8fafc;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <label style="font-size: 13px; font-weight: bold; color: #1e293b;">Supertrend (P/M)</label>
+                <div style="display: flex; gap: 8px; width: 140px;">
+                    <input type="number" id="st_p" value="10" style="margin: 0; padding: 6px; width: 100%;">
+                    <input type="number" id="st_m" value="3.0" step="0.1" style="margin: 0; padding: 6px; width: 100%;">
+                </div>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <label style="font-size: 13px; font-weight: bold; color: #1e293b;">EMA (Fast/Slow)</label>
+                <div style="display: flex; gap: 8px; width: 140px;">
+                    <input type="number" id="ema_f" value="9" style="margin: 0; padding: 6px; width: 100%;">
+                    <input type="number" id="ema_s" value="21" style="margin: 0; padding: 6px; width: 100%;">
+                </div>
+            </div>
 
-        <button onclick="runScan()">Run Scan</button>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label style="font-size: 13px; font-weight: bold; color: #1e293b;">Min ADX / RSI Dip</label>
+                <div style="display: flex; gap: 8px; width: 140px;">
+                    <input type="number" id="adx" value="25" style="margin: 0; padding: 6px; width: 100%;">
+                    <input type="number" id="rsi" value="40" style="margin: 0; padding: 6px; width: 100%;">
+                </div>
+            </div>
+            
+        </div>
 
-        <table id="scanTable">
+        <table id="scanTable" style="margin-top: 15px;">
             <thead>
                 <tr>
                     <th>Symbol</th>
                     <th>Price</th>
-                    <th>Signal</th>
+                    <th>Signal Path</th>
                     <th>ADX</th>
+                    <th>Accuracy</th>
                 </tr>
             </thead>
-            <tbody></tbody>
+            <tbody>
+                <tr><td colspan='5' style='text-align: center; color: #64748b;'>No stocks met the strict Confluence criteria.</td></tr>
+            </tbody>
         </table>
     </div>
 
-    <!-- ACTIVE TRADES -->
     <div class="card trades">
         <h2>Active Trades</h2>
         <button onclick="loadTrades()">Refresh</button>
@@ -68,7 +98,6 @@
         </table>
     </div>
 
-    <!-- ORDER -->
     <div class="card order">
         <h2>Place Order</h2>
 
@@ -81,7 +110,7 @@
         </div>
 
         <button onclick="placeOrder()">Place Order</button>
-        <p id="orderResult"></p>
+        <p id="orderResult" style="margin-top: 10px; font-weight: bold;"></p>
     </div>
 
     <div class="card history" style="grid-column: span 3;">
@@ -103,6 +132,6 @@
 
 </main>
 
-<script src="/static/script.js"></script>
+<script src="/static/script.js?v=999"></script>
 </body>
 </html>
